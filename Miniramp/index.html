@@ -4,40 +4,74 @@
 <title>Mini Ramp</title>
 <style>@font-face{font-family:'Press Start 2P';src:local('Press Start 2P'),url('assets/fonts/PressStart2P-Regular.ttf') format('truetype');font-display:swap}</style>
 <style>
-:root{--bg:#071821;--fg:#a9bb9c;--hi:#e0f8cf;--mid:#42463f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--tile:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAGKADAAQAAAABAAAAGAAAAADiNXWtAAAAO0lEQVRIDWNkl1D4z0BDwERDs8FGj1pAMIRHg2g0iAiGAEEFo6loNIgIhgBBBaOpaDSICIYAQQU0T0UAK0kBbsDKX3kAAAAASUVORK5CYII=);--frame:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAACmCAYAAAA1QFEhAAADp0lEQVR4nO3Zv0qbYRjG4SdFyNK1JeASUpwCldCjKDgIHQIOehSCm3QLeBRxELo5eBoiFjJJoWPpGTil05fmT4UWNNbc17U8ISHwLs/L70taNafd6U4L2Gj3P763mtdbzYt2pzs9Ohk8z4mAtRmPatpcAq+qLD8kOToZzGq/9aflH49unuVgwNOZ3/PeYLtOh1e/HwEazfK/6b2ut+/f1c+v30zTfOFzcnlb49FNHZ0MqjfYnu37K8tvmps/+/u7CzveWHgEGI9uVpZ/cnn7KPkBrN/h8UFd303qw06/ru8mNbm8rc9f9qqq6nR4tVgAVWX5YYOcn13Mlv/DTn/l85XfAJaXf/4/Q+BlaXe60/Ozi1kJLHuwAIDN8VABrFwATQEAm6N5DFimACCAAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCKQAIpgAgmAKAYAoAgikACKYAIJgCgGAKAIIpAAimACCYAoBgCgCCPVQAW8tvNAXw8VO/zs8uqt3pTtdyQuBJ9Pd3/70Aru8mdXh8sJYDAk9jfvn/qgAml7cLXzo8Pph92TTNlzvPzy5WLoCFAjg6Gcwugec+rGmaj7/8n7/sLVwArXanO20WvzEe3fxraQD/ueXlPx1eVauqav4S6A22138yYK1Oh1d1/+N7q9W80e50p8s3BLB5muWvqmrNf+AvP9h8zfJXVf0CqFXEdqPH2NAAAAAASUVORK5CYII=);--bg:#071821;--fg:#a9bb9c;--hi:#e0f8cf;--mid:#42463f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071821}}
 :root[data-theme="dark"]{--bg:#071821}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:'Press Start 2P',monospace}
+html{background:var(--bg) var(--tile);image-rendering:pixelated}
+html,body{margin:0;min-height:100%;color:var(--fg);font-family:'Press Start 2P',monospace}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:8px}
-canvas{image-rendering:pixelated;display:block;background:var(--bg);box-shadow:0 0 0 4px var(--mid)}
+#frame{display:block;line-height:0;border:8px solid transparent;border-image:var(--frame) 8 stretch;image-rendering:pixelated} /* window frame: 256x166 ring made from Game_window_frame.png, scaled in whole-number steps by fit() */
+canvas{image-rendering:pixelated;display:block;background:var(--bg)}
+#helpb{position:fixed;top:8px;right:8px;padding:6px 10px;font-size:12px;z-index:5}
+#help{position:fixed;inset:0;background:rgba(7,24,32,.94);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+#help[hidden]{display:none}
+.panel{max-width:660px;max-height:100%;overflow:auto;border:6px solid var(--mid);background:var(--bg);padding:16px 22px;color:var(--fg)}
+.panel h2{font-size:14px;color:var(--hi);margin:0 0 10px;text-align:center}
+.panel h3{font-size:10px;color:var(--hi);margin:14px 0 4px}
+.panel p{font-size:10px;line-height:1.9;text-align:left;max-width:none;margin:0 0 6px}
+.panel b{color:var(--hi);background:var(--mid);padding:1px 4px}
+.panel .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .pad{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 button{font:inherit;font-size:12px;padding:12px 14px;background:var(--mid);color:var(--hi);border:2px solid var(--fg);touch-action:manipulation;user-select:none;-webkit-user-select:none}
 button:active{background:var(--hi);color:var(--bg)}
 button:focus-visible{outline:3px solid var(--hi)}
 p{font-size:9px;line-height:1.8;margin:0;text-align:center;max-width:90%}
 </style></head><body>
-<canvas id="c" width="240" height="150"></canvas>
-<div class="pad">
+<div id="frame"><canvas id="c" width="240" height="150"></canvas></div>
+<div class="pad" id="pad">
 <button data-k="l">&#9664;</button><button data-k="r">&#9654;</button><button data-k="u">&#9650;</button><button data-k="n">&#9660;</button>
-<button data-k="w">W STALL</button><button data-k="a">A FLIP</button><button data-k="p">S SPIN</button><button data-k="d">D GRAB</button><button data-k="s">START</button><button id="menub">MENU</button><button id="bgb">BG IMAGE</button><button id="bgr">BG RESET</button><input type="file" id="bgf" accept="image/*" hidden>
+<button data-k="w">W STALL</button><button data-k="a">A FLIP</button><button data-k="p">S SPIN</button><button data-k="d">D GRAB</button><button data-k="s">START</button><button id="menub">MENU</button>
 </div>
-<p>Left/right: pump, and lean in the air. Up/down: ride toward the back or front of the ramp. Esc or the MENU button returns to the main menu. A kickflip (A+right heelflip, A+down shove-it, A+up FS shove-it): hold A or tap it again to keep flipping (double, triple, quad flips; 360, 540... shove-its). D grab (D+down indy, D+up melon, D+right nose, D+left tail). S spin: hold S to keep spinning (every 180 counts, up to 1440) and release to finish the turn; each tap also adds 180. Near the coping press W. If you are moving toward the back or front of the ramp (up/down while riding or in the air), W = 50-50 grind, W+right = nose slide, W+left = tail slide: they slide along the coping. If you are not moving that way, W = rock stall, W+right = nose stall, W+left = tail stall (keep the balance marker off the far end with left/right). Release W to drop in. After START you pick a level (big or half-size ramp), then your gear. BG IMAGE loads your own 240x138 PNG as the background.</p>
+<button id="helpb" title="Help (F1)">?</button>
+<div id="help" hidden><div class="panel">
+<h2>MINI RAMP</h2>
+<h3>MENUS</h3>
+<p>Press <b>any button</b> (or tap the game) to start. <b>ESC</b> or the MENU button opens the menu: pick the level and your outfit (UP / DOWN choose a row, LEFT / RIGHT change it, SPACE or ESC to go back). A run in progress is paused, and changing the level starts a new run. <b>F1</b>: this help (the game pauses).</p>
+<h3>RIDING</h3>
+<p><b>LEFT / RIGHT</b> pump on the ramp. <b>UP / DOWN</b> ride toward the back / front of the ramp (while rolling fast or in the air).</p>
+<h3>AIR TRICKS</h3>
+<p><b>A</b> kickflip. A+RIGHT heelflip, A+DOWN shove-it, A+UP FS shove-it. Hold A or tap again for double, triple, quad flips and 360, 540... shove-its.</p>
+<p><b>D</b> grab. D+DOWN indy, D+UP melon, D+RIGHT nose, D+LEFT tail.</p>
+<p><b>S</b> spin. Hold S to keep spinning (every 180 counts, up to 1440), release to finish the turn. Each tap also adds 180.</p>
+<p>Every 180 spin turns him around: his back is shown until the next 180 (he rides switch). A wipeout resets his stance.</p>
+<p>Landing in the middle of a trick is a wipeout.</p>
+<h3>COPING (press W near the top of the wall)</h3>
+<p>Moving toward the back or front of the ramp (UP / DOWN held): <b>W</b> 50-50 grind, W+RIGHT nose slide, W+LEFT tail slide. They slide along the coping.</p>
+<p>Not moving that way (for example hovering above the coping): <b>W</b> rock stall, W+RIGHT nose stall, W+LEFT tail stall. Keep the balance marker off the far end with LEFT / RIGHT.</p>
+<p>Release W to drop back in. You need enough speed to reach the coping, and each wall allows one stall and one slide until you ride across the flat bottom.</p>
+<h3>OPTIONS</h3>
+<div class="row"><button id="padb">TOUCH BUTTONS</button></div>
+<p style="margin-top:8px">Your level, outfit and touch-button setting are saved in this browser.</p>
+<div class="row"><button id="helpx">CLOSE (F1)</button></div>
+</div></div>
 <script>
-const cv=document.getElementById('c');let g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+const cv=document.getElementById('c');let g=cv.getContext('2d');g.imageSmoothingEnabled=false;let helpOpen=false;
 // pixel-perfect scaling: the canvas is always shown at a whole-number multiple of its size in device pixels
-function fit(){const dpr=devicePixelRatio||1,rest=[...document.body.children].filter(e=>e!==cv&&e.offsetHeight>0).reduce((a,e)=>a+e.offsetHeight+12,0),
- aw=Math.min(innerWidth-24,1400),ah=innerHeight-rest-36,k=Math.max(1,Math.floor(Math.min(aw*dpr/240,ah*dpr/150)));
- cv.style.width=(240*k/dpr)+'px';cv.style.height=(150*k/dpr)+'px'}
+function fit(){const dpr=devicePixelRatio||1,fr=document.getElementById('frame'),rest=[...document.body.children].filter(e=>e!==fr&&e.offsetHeight>0&&getComputedStyle(e).position!='fixed').reduce((a,e)=>a+e.offsetHeight+12,0),
+ aw=Math.min(innerWidth-24,1400),ah=innerHeight-rest-36,k=Math.max(1,Math.floor(Math.min(aw*dpr/256,ah*dpr/166))); // 256x166 = game window + the 8 px frame on every side
+ cv.style.width=(240*k/dpr)+'px';cv.style.height=(150*k/dpr)+'px';fr.style.borderWidth=(8*k/dpr)+'px';document.documentElement.style.backgroundSize=(24*k/dpr)+'px'}
 const W=240,H=150,HY=138,FL=108,G=330,DP=30;
 let R=44,CX1=80,CX2=160,YC=FL-R,DECK=YC-6,LO=CX1-R,HI=CX2+R,VMAX=232,lvi=0; // ramp geometry: changed by setLevel()
 const PD='#071821',PG='#42463f',PL='#a9bb9c',PW='#e0f8cf';
 const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const keys={u:0,n:0,l:0,r:0,w:0,a:0,d:0,p:0,s:0};
 const KM={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'u',ArrowDown:'n',w:'w',a:'a',s:'p',d:'d',' ':'s'}; // W stall/grind, A flip, S spin (180/360), D grab, Space start
-addEventListener('keydown',e=>{const k=KM[e.key.length>1?e.key:e.key.toLowerCase()];if(k){keys[k]=1;if(k=='s'&&!e.repeat)start();if(state=='gear'&&!e.repeat)menuKey(k);if(state=='level'&&!e.repeat)levelKey(k);e.preventDefault()}});
+addEventListener('keydown',e=>{if(helpOpen)return;
+ if((state=='title'||state=='over')&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key!='F1'&&e.key!='Escape'&&e.key!='Tab')start(); // any button starts
+ const k=KM[e.key.length>1?e.key:e.key.toLowerCase()];if(k){keys[k]=1;if(state=='menu'&&!e.repeat){if(k=='s')closeMenu();else menuKey(k)}e.preventDefault()}});
 addEventListener('keyup',e=>{const k=KM[e.key.length>1?e.key:e.key.toLowerCase()];if(k)keys[k]=0});
 document.querySelectorAll('button[data-k]').forEach(b=>{const k=b.dataset.k;
- b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=1;if(k=='s')start();if(state=='gear')menuKey(k);if(state=='level')levelKey(k)});
+ b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=1;if(state=='title'||state=='over')start();else if(state=='menu'){if(k=='s')closeMenu();else menuKey(k)}});
  ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>keys[k]=0));
 });
 const sx=x=>cl(x,LO+1,HI-1);
@@ -45,8 +79,9 @@ function surf(x){x=sx(x);if(x>=CX1&&x<=CX2)return FL;const d=x-(x<CX1?CX1:CX2);r
 function slope(x){x=sx(x);if(x>=CX1&&x<=CX2)return 0;const d=x-(x<CX1?CX1:CX2);return -d/Math.sqrt(R*R-d*d)}
 
 let P,state='title',score=0,time=60,pop={t:9,s:''},tt=0;
-function reset(){P={x:LO,y:DECK,z:.5,v:0,vx:0,vy:0,air:0,rot:0,dir:1,lean:0,spin:0,spinOn:0,flip:0,flipOn:0,lx:0,lc:0,la:0,stall:1,stT:.2,out:0,sx:LO,drop:1,dropT:0,sd:[0,0],sg:[0,0],g50:0,sl:0,hv:0,zv:0,zp:.5,grab:0,gt:0,at:0,done:[],bail:0,bt:0};score=0;time=60;pop={t:9,s:''}}
-function start(){if(state=='gear'){reset();state='play'}else if(state=='level')state='gear';else if(state!='play')state='level'}
+function reset(){P={x:LO,y:DECK,z:.5,v:0,vx:0,vy:0,air:0,rot:0,dir:1,lean:0,spin:0,spinOn:0,flip:0,flipOn:0,lx:0,lc:0,la:0,stall:1,stT:.2,out:0,sx:LO,drop:1,dropT:0,sd:[0,0],sg:[0,0],g50:0,sl:0,hv:0,zv:0,zp:.5,back:0,grab:0,gt:0,at:0,done:[],bail:0,bt:0};score=0;time=60;pop={t:9,s:''}}
+function start(){if(state=='title'||state=='over'){reset();state='play'}}
+let lvChanged=0,menuFrom='title';
 reset();
 
 function startStall(p,g50){
@@ -59,7 +94,7 @@ function stallOK(p){const hh=p.y-(DECK-3);if(hh<=0)return true;
  if(!p.air&&!(p.x<120?p.v<0:p.v>0))return false;
  const sp=p.air?Math.max(0,-p.vy):Math.abs(p.v);return sp*sp>=2*(p.air?G*.9:G)*hh}
 function upd(dt){const p=P;
- if(state=='title'||state=='level'||state=='gear')return;
+ if(state=='title'||state=='menu')return;
  p.zv+=((p.z-p.zp)/Math.max(dt,.001)-p.zv)*.3;p.zp=p.z; // how fast he is moving toward the back/front of the ramp
  if(state=='play'){time-=dt;if(time<=0){time=0;state='over'}}
  if(p.bail)p.bt+=dt;
@@ -100,7 +135,7 @@ function upd(dt){const p=P;
   p.y=surf(p.x);
   if(p.x>=CX1&&p.x<=CX2){p.sd=[0,0];p.sg=[0,0]}
   p.rot+=(Math.atan(slope(p.x))-p.rot)*Math.min(1,15*dt);
-  if(p.bail&&p.bt>1.3){const L=Math.random()<.5;Object.assign(p,{bail:0,stall:1,drop:1,dropT:0,sd:[0,0],sg:[0,0],g50:0,sl:0,hv:0,zv:0,zp:.5,spinOn:0,flipOn:0,spin:0,flip:0,gt:0,done:[],stT:.2,out:0,sx:L?LO:HI,x:L?LO:HI,y:DECK,z:.5,v:0,rot:0,dir:L?1:-1,grab:0,lean:0})}
+  if(p.bail&&p.bt>1.3){const L=Math.random()<.5;Object.assign(p,{bail:0,stall:1,drop:1,dropT:0,sd:[0,0],sg:[0,0],g50:0,sl:0,hv:0,zv:0,zp:.5,back:0,spinOn:0,flipOn:0,spin:0,flip:0,gt:0,done:[],stT:.2,out:0,sx:L?LO:HI,x:L?LO:HI,y:DECK,z:.5,v:0,rot:0,dir:L?1:-1,grab:0,lean:0})}
   if(ctl&&((p.x<=LO+4&&p.v<0)||(p.x>=HI-4&&p.v>0))){
    const s2=slope(p.x),n2=Math.hypot(1,s2);
    Object.assign(p,{air:1,vx:p.v/n2*.12,vy:p.v*s2/n2,spin:0,spinOn:0,flip:0,flipOn:0,gt:0,at:0,done:[],lean:0,lx:0,lc:0});
@@ -121,7 +156,7 @@ function upd(dt){const p=P;
     else{const n=p.fN,nm=k<2?['','DOUBLE ','TRIPLE ','QUAD '][n-1]+['KICKFLIP','HEELFLIP'][k]:(n>1?n*180+' ':'')+['SHOVE-IT','FS SHOVE-IT'][k-2],base=[300,350,250,300][k];
      p.flipOn=0;p.flip=0;p.done.push([nm,Math.round(base*n*(1+(k<2?.25:.2)*(n-1)))])}}}
   if(p.spinOn){p.spin+=dt*(1.5+p.sT*.35);if(p.spin>=p.sT){if(keys.p&&p.sT<4)p.sT=Math.min(4,p.sT+.5); // holding S keeps him spinning
-   else{const k=Math.round(p.sT*2);p.spinOn=0;p.spin=0;p.done.push([''+(k*180),[250,500,800,1200,1700,2300,3000,3800][k-1]])}}}
+   else{const k=Math.round(p.sT*2);if(k&1)p.back=p.back?0:1;p.spinOn=0;p.spin=0;p.done.push([''+(k*180),[250,500,800,1200,1700,2300,3000,3800][k-1]])}}}
   if(p.vy>0&&p.y>=surf(p.x)){
    const s=slope(p.x),n=Math.hypot(1,s);p.air=0;p.y=surf(p.x);p.v=(p.vx+p.vy*s)/n;
    if(p.flipOn||p.spinOn||p.grab>.5||p.doom){
@@ -136,10 +171,11 @@ function upd(dt){const p=P;
 }
 
 /* ---------- sprites (your character, 24x24 frames) ---------- */
-const B64=['iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA90lEQVR4nO2TsYrCQBCGP0VJ5YFWSWcqu3uYa2x8EBubyxtYa5dmEXwBm4PjiisOwc5Ggo2dcLEJCo5VgkZ0R6JdvmrY2Zl/mZ0fSkqKUtFcclxf0vi4T7Lzw3Zjra8+0jxPveXdzKkE7jXXitRsDQCW0TSLf7//AOh1B5pS+4jS5p32R3bW6w4ITUBoguICRVELnI9J83I1jutLlMwlSubiuL7UW56Y2UjMbCSaLXq5D6xb5Li+vLebNN4aAOz+dwDEccwKT2wiVh8soymTr/FV7nPYJzTBc3wA8LNYA5cj0mCdYd7NeQHNP6g4F9JsT8rLjVZi5QS0wVxhtRrM2gAAAABJRU5ErkJggg==','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA6klEQVR4nO2UoQ7CMBCGfxbG0FOdo4q3QWBmppAoBHZqPMbkTA0vMIlCkGncHI6EzCyQcAjSZVlgvWXg9qmuXe9v/7srMDDQlxHnJ0dI0uPnvazmH9eLcb/VJXgT2/W+rrEE2oJzRcamAABwzvfV+Hg4AQACP+RsNVukg89ny2ou8EMkKkKiov4CfWEL1G3inJyNIyTlZUZ5mZEjJNmuRyqNSaUxcarIWMe265E1mVbf9T4AzL3QuugISdqa1WIDAChuBQBgu1sDeCe8TeTvSTZa1Gy2n1r0SUgLcN6hTtRvwqkezd9zMGDkBfUuVH+CI8mhAAAAAElFTkSuQmCC','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA6klEQVR4nGNgGAWjYNADRmIUsUso/oex//36ARf//e45Qf1MpBiODliFJHHKEWUBPsOJtYSFkAEMDAwMNx+sg7NPHj7LwMDAwBATXkuMVsJBBDM8L74SLjapbTbDkpXNDEtWNlNuAQzsPHgTzj518RGx2oi3ADmYiHE50YBdQvH/gx/n/z/4cf4/u4Tif1Yhyf8rd8/5v3L3nP/EpCKiDGeXUIRjViFJOCbGEqJTUZJfAQMDAwPD54+fGRgYGBhKWrKIciTBnIieF5BzMgMD4dxMVFGBbBHMAmKKCZIAsk9IiVyik+kooBkAAF2WXpxNb7MNAAAAAElFTkSuQmCC','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA50lEQVR4nO2TIQvCUBSFP8Wxbtri/pB1RRAEi0EMFgWbaLdqMVr8A0YxGESw2YbFJohlKHhNm2Pi3jUIhn3p8t679/DeOQ9ycv6eguaQ7XgS1Y9bGK/fzydjf/Gb4WmssvtxTyWQNVwrUjINADgEi7jerLYAVP2+pjXbA9vxJDk8KRBR9fuZXhg9iGjVunE9Hk60bXqB8Wz0Eus11AJGbMeTINxJEO7Edjyxyq7Ml1OZL6eiSZExx+kkJf8BmP+C2uR6pQ3A9XIFoDNoAmaTVTEFWO+PwPsNTPz8idQkhTTmRqhjmvMznuSKVuE4k9aJAAAAAElFTkSuQmCC'];
-const FR0=B64.map(b=>{const i=new Image();i.src='data:image/png;base64,'+b;return i});
+const B64=['iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA/ElEQVR4nGNgGAWjgFLASEgBu4Tif2T+v18/UOR/v3uO1wwmUgzHBliFJPGqwWsBNQBO7yG7/uaDdXDxk4fPwtkx4bVwNq6gIugDmOHqCkEYBi9Z2UxIO+2DCKcFP1/cR/EycjChu5xQSsIL2CUU/z/4cf7/gx/n/7NLKP5nFZL8v3L3nP8rd8/5D0tB+FISUTYjRzhyPiDG5URltL7WXDj/4N4jDAwMDAxSMpIMU+esI2gJXkl2CcX/sLDfunQ/AwMDA8Ptm3cZGBgYGCxdDRkYGCApCp8lLIR8AANF1ZMZGBgQQQSzgBCgeVlENEC2iFD5Qy74j4M9CigDAK9/ZSwo5g7zAAAAAElFTkSuQmCC','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA5ElEQVR4nGNgGAWjgFLASEgBu4Tif2T+v18/UOR/v3uO1wwmUgzHBliFJPGqwWsBNQBO7yG7/uaDdXDxk4fPwtkx4bVwNq6gIugDmOHqCkEYBi9Z2UxIO+2DCKcFP1/cR/EycjChu5xQSsIL2CUU/z/4cf7/gx/n/7NLKP5nFZL8v3L3nP8rd8/5D0tB+FISRfmAiY0Dw6ckWcAuofgfFjRbl+5nYGBgYDi49wgDAwMDQ3CiFwMDAyTC8QURCz4LsAEpGUmS1NO8qCA69mEWwSygKOXgs4CBgXD5Qy74j4M9CigDAPi/XVyIY+o9AAAAAElFTkSuQmCC','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA2klEQVR4nGNgGAWjYNADRkIK2CUU/yPz//36gSL/+91zvGYwkWI4NsAqJIlXDV4LqAFweg/Z9TcfrIOLnzx8Fs6OCa+Fs3EFFUEfwAxXVwjCMHjJymZC2mkfRDgt+PniPoqXkYMJ3eWEUhJewC6h+P/Bj/P/H/w4/59dQvE/q5Dk/5W75/xfuXvOf1gKIpSSCBrOLqEIx6xCknCMbAkuwEKMRTcfrGPYunQ/AwMDA8Ptm3cZGBgYGCxdDYlyJM1zMtGRA7MIZgFFEYvPAgYGCiKVAPiPgz0KKAMAY4JhKFcjhZQAAAAASUVORK5CYII=','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA20lEQVR4nGNgGAWjYNADRkIK2CUU/yPz//36gSL/+91zvGYwkWI4NsAqJIlXDV4LqAFweg/Z9TcfrIOLnzx8Fs6OCa+Fs3EFFUEfwAxXVwjCMHjJymZC2mkfRDgt+PniPoqXkYMJ3eWEUhJewC6h+P/Bj/P/H/w4/59dQvE/q5Dk/5W75/xfuXvOf1gKwpeSaJ4P8EqySyj+hwXN1qX7GRgYGBhu37zLwMDAwGDpasjAwACJcHyWsOCzABkUVU9mYGBA+ABmASFA8yAiGiBbRKh4IBf8x8EeBZQBAEeoWyvI9jr4AAAAAElFTkSuQmCC']; // front idle frames
+const B64B=['iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA5klEQVR4nGNgGAWjgFLASEgBq5Dkf2Q+ExsHivzPF/fxmsFEiuHYALuEIl41eC2gBsBpATGuhwF8vhg4H9Dcgt/vnjMyMDAwLFnZzLBkZTOG/M0H6xhuPljHwMCAPyXhlGAVkvz/+91zRlYhyf/IFpjbGsPZ6gpBBJMpwXwAswzGRs4HhAwnygJ2CcX/mXFecL6qujKcXVDaDQ9KXIBgRkM2HB1M6C4lKTljteDBj/P/WYUk4ZhdQvE/u4Tif1Yhyf8rd8/5T8gCssuif79+MDAwMBAMIqIBskWEyh9ywX8c7FFAGQAAPY1NmF0LG6AAAAAASUVORK5CYII=','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAyElEQVR4nGNgGAWjgFLASEgBq5Dkf2Q+ExsHivzPF/fxmsFEiuHYALuEIl41eC2gBsBpATGuhwF8vhg4H9Dcgt/vnjMyMDAwLFnZzLBkZTOG/M0H6xhuPljHwMCAPyXhlGAVkvz/+91zRlYhyf/IFpjbGsPZ6gpBBJMpzfMBXklWIcn/2SlBKGKq6soo/ILSbnhwYgMEI7mgKQWnnHe0IyHt5AfRv18/GBgYGPC6nigL0C2CWUAo7EkGyD4hVP6QC/7jYI8CygAAVv4+mgNGElkAAAAASUVORK5CYII=','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAt0lEQVR4nGNgGAWjYNADRkIKWIUk/yPzmdg4UOR/vriP1wwmUgzHBtglFPGqwWsBNQBOC4hxPQzg88XA+YDmFvx+95yRgYGBYcnKZoYlK5sx5G8+WMdw88E6BgYG/CkJpwSrkOT/3++eM1KaTPFKsgpJ/s9OCUIRU1VXRuEXlHbDfYsNEIyDgqYUnHLe0Y6EtJOfk//9+sHAwMCA1/VEWYBuEcwCQmFPMkD2CaHigVzwHwd7FFAGAFvcN5lMViKYAAAAAElFTkSuQmCC','iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAA0klEQVR4nGNgGAWjYNADRkIKWIUk/yPzmdg4UOR/vriP1wwmUgzHBtglFPGqwWsBNQBOC4hxPQzg88XA+YDmFvx+95yRgYGBYcnKZoYlK5sx5G8+WMdw88E6BgYG/CkJpwSrkOT/3++eM1KaTFlwScB8wMDAwJCdEgQXV1VXhrMLSrvxmQ1xED5JViHJ/8iGo4MJ3aUkpTasFjz4cf4/q5AkHLNLKP5nl1D8zyok+X/l7jn/CVlAdlHx79cPBgYG1KCkCCBbRKh4IBf8x8EeBZQBAAX8RXvkg17tAAAAAElFTkSuQmCC']; // back idle frames (shown after a 180)
+const FR0=B64.concat(B64B).map(b=>{const i=new Image();i.src='data:image/png;base64,'+b;return i});
 let FR=FR0,baked=false;
-const SEQ=[0,1,2,3,0];
+function bf(p){return (p.air&&!p.stall?0:(tt/.125|0)%4)+(p.back?4:0)} // frame to draw: front 0-3, back 4-7
 const PC={D:PD,G:PG,L:PL,W:PW};
 function mk(rows){const c=document.createElement('canvas');c.width=rows[0].length;c.height=rows.length;const x=c.getContext('2d');
  rows.forEach((r,j)=>[...r].forEach((ch,i)=>{if(PC[ch]){x.fillStyle=PC[ch];x.fillRect(i,j,1,1)}}));return c}
@@ -179,7 +215,7 @@ function pose(K,t,f,oy){let [A,cx,cy,lean]=kf(K,t);if(oy!==undefined)cy=oy;const
   else g.drawImage(rotSpr('pb|'+f+'|'+gv,48,x=>x.drawImage(FR[f],0,0,24,19,12,5,24,19),lr),hxr-24,hyr-24)}}
 
 /* ---------- static background (4-shade palette) ---------- */
-const bg=document.createElement('canvas');bg.width=W;bg.height=H;let CBG=null;
+const bg=document.createElement('canvas');bg.width=W;bg.height=H;
 const FONT="8px 'Press Start 2P',monospace";
 function rc(c,col,x,y,w,h){c.fillStyle=col;c.fillRect(x,y,w,h)}
 function dth(c,x,y,w,h,col){c.fillStyle=col;for(let j=0;j<h;j++)for(let i=j&1;i<w;i+=2)c.fillRect(x+i,y+j,1,1)}
@@ -218,7 +254,6 @@ function build(){
  [[44,26,'SK8',0],[84,22,'OK',1],[116,26,'RAD',0],[150,22,'AIR',1],[176,26,'CAL',0]].forEach(([x,w,t,d])=>{
   rc(c,PD,x-1,77,w+2,13);rc(c,d?PG:PW,x,78,w,11);c.fillStyle=d?PW:PD;c.fillText(t,x+w/2+1,80)});
  for(let x=46;x<=194;x+=6){const k=(x-46)/6|0,y=62+Math.round(Math.sin((x-46)/148*Math.PI)*5);rc(c,PD,x,y,6,1);rc(c,k%2?PW:PL,x+1,y+1,3,2);rc(c,PD,x+2,y+3,1,1)} // bunting
- if(CBG)c.drawImage(CBG,0,0,W,HY);
  // front face of the ramp: crate lattice
  c.save();c.beginPath();c.moveTo(0,DECK+D2);c.lineTo(LO,DECK+D2);c.lineTo(LO,YC+D2);
  for(let x=LO+1;x<=HI-1;x+=2)c.lineTo(x,surf(x)+D2);
@@ -242,7 +277,7 @@ function build(){
   rc(c,PD,x,y0,4,y1-y0);rc(c,PW,x+1,y0,1,y1-y0);rc(c,PL,x+2,y0,1,y1-y0);
   for(let y=y0+4;y<y1;y+=8)rc(c,PD,x,y,4,1);
   rc(c,PD,x,y1,4,3);rc(c,PG,x+1,y1+1,2,1)});
- if(!CBG){palm(c,12,DECK+8,34);palm(c,228,DECK+8,30)}
+ palm(c,12,DECK+8,34);palm(c,228,DECK+8,30)
 }
 build();if(document.fonts)document.fonts.load(FONT).then(build);
 
@@ -285,29 +320,29 @@ function rotG(ang){const q=Math.round(ang/(Math.PI/2));
 // the skater (board + body + grab arm) drawn upright at the origin
 function drawUpright(p,shift){
  g.save();if(shift)g.translate(0,-3);
- g.scale(p.spinOn?Math.cos(p.spin*Math.PI*2)||.05:1,1);
+ g.scale(p.spinOn?Math.abs(Math.cos(p.spin*Math.PI*2))||.05:1,1);
  g.save();g.translate(0,p.flipOn?-3-Math.round(Math.sin(p.flip*Math.PI)*3):-3);
  if(p.flipOn){const a=p.flip*Math.PI*(p.fk<2?2:1);
   if(p.fk<2){g.rotate((p.fk?-1:1)*Math.sin(a)*.6);g.scale(1,Math.cos(a)||.05)} // kickflip tips one way, heelflip the other
   else g.scale(Math.cos(a*(p.fk==3?-1:1))||.05,1)}
  g.drawImage(BD,-8,-3);g.restore();
- const cr=p.grab>.5,by=-26+(cr?2:0),f=p.air?0:SEQ[(tt/.083|0)%5];
+ const cr=p.grab>.5,by=-26+(cr?2:0),back=(p.back?1:0)^(p.spinOn?(Math.floor(p.spin*2+.5)&1):0),f=(p.air?0:(tt/.125|0)%4)+(back?4:0); // his back shows while a spin is past a quarter turn
  if(FR[f].complete)g.drawImage(FR[f],-12,by);
  if(cr){const k=p.gk||0,tx=[3,-3,8,-8][k],x0=tx>0?4:-4,y0=by+17;g.fillStyle=PD;fline(x0,y0,tx,-5);fline(x0,y0+1,tx,-4);rc(g,PD,tx-1,-7,3,3);rc(g,PW,tx,-6,1,1)}
  g.restore()}
 function skater(){
  const p=P;g.save();g.translate(Math.round(p.x),Math.round(p.y+(p.z-.5)*DP)+1);
- if(p.stall&&p.g50&&!p.drop){const f=SEQ[(tt/.083|0)%5],dy=p.hi&&p.stT<p.fT?-(p.h0-p.fv*p.stT-247.5*p.stT*p.stT):0;g.translate(0,Math.round(dy)-3);const tl=[0,.52,-.52][(p.sl||1)-1];
+ if(p.stall&&p.g50&&!p.drop){const f=bf(p),dy=p.hi&&p.stT<p.fT?-(p.h0-p.fv*p.stT-247.5*p.stT*p.stT):0;g.translate(0,Math.round(dy)-3);const tl=[0,.52,-.52][(p.sl||1)-1];
   if(tl)g.drawImage(rotSpr('be|'+Math.sign(tl)+'|'+gv,24,x=>x.drawImage(BE,6,9),tl),-12,-12);else g.drawImage(BE,-6,-3);
   g.translate(0,-3);if(FR[f].complete){if(tl)g.drawImage(rotSpr('bl|'+f+'|'+Math.sign(tl)+'|'+gv,56,x=>x.drawImage(FR[f],16,4),Math.round(tl*.5/.2618)*.2618),-28,-28);else g.drawImage(FR[f],-12,-24)}g.restore();return}
- if(p.stall){const m=p.sx<120?-1:1,f=SEQ[(tt/.083|0)%5];g.scale(m,1);
+ if(p.stall){const m=p.sx<120?-1:1,f=bf(p);g.scale(m,1);
   if(p.drop)pose(KD,p.out>0?1+(1-p.out/.25):cl((p.dropT-.6)/.2,0,1),f);
   else if(p.hi&&!(p.out>0)&&p.stT<p.fT){const K=KSETS[p.sk||0];pose([KA[0],KA[1],K[2]],2*p.stT/p.fT,f,K[2][2]-(p.h0-p.fv*p.stT-247.5*p.stT*p.stT))}
   else pose(KSETS[p.sk||0],p.out>0?2*p.out/p.oT:(p.hi?2:Math.min(2,p.stT*p.sr/.15)),f);
   g.restore();return}
  const st=Math.PI/12,ang=Math.round((p.rot+(p.bail?1.5*p.dir:0))/st)*st,dyn=p.flipOn||p.spinOn,q=Math.round(ang/(Math.PI/2));
  if(ang==0||dyn||Math.abs(ang-q*Math.PI/2)<1e-6){rotG(ang);drawUpright(p,p.bail)} // 0/90/180/270 degrees are exact; flips and spins are animated, so they use the plain transform
- else{const cr=p.grab>.5,f=p.air?0:SEQ[(tt/.083|0)%5]; // any other angle: clean RotSprite rotation, cached per pose
+ else{const cr=p.grab>.5,f=(p.air?0:(tt/.125|0)%4)+(p.back?4:0); // any other angle: clean RotSprite rotation, cached per pose
   g.drawImage(rotSpr(['sk',f,cr?1+(p.gk||0):0,p.bail?1:0,gv].join('|'),72,x=>{const og=g;g=x;x.translate(36,36);drawUpright(p,p.bail);g=og},ang),-36,-36)}
  g.restore();
 }
@@ -317,23 +352,17 @@ function draw(){
  shadow();skater();meter();
  g.font=FONT;g.textBaseline='top';
  g.fillStyle=PD;g.fillRect(0,HY,W,12);
- g.fillStyle=PW;g.textAlign='left';g.fillText('SCORE '+String(score).padStart(5,'0'),4,HY+2);
- g.textAlign='right';g.fillText('TIME '+Math.ceil(time),W-4,HY+2);
+ if(state!='title'){g.fillStyle=PW;g.textAlign='left';g.fillText('SCORE '+String(score).padStart(5,'0'),4,HY+2);
+ g.textAlign='right';g.fillText('TIME '+Math.ceil(time),W-4,HY+2)}
  if(pop.t<1.6){const ps=pop.s,col=pop.t%.3<.15?PW:PL;if(ps.length>28){let i=ps.lastIndexOf('+',28);if(i<1)i=28;T(ps.slice(0,i),W/2,8,col,'center');T(ps.slice(i),W/2,18,col,'center')}else T(ps,W/2,14,col,'center')}
- if(state=='gear')menu();else if(state=='level')levelMenu();else if(state!='play'){
-  rc(g,PW,30,30,180,92);rc(g,PD,31,31,178,90);dth(g,31,31,178,90,PG);rc(g,PD,35,35,170,82);
-  g.textAlign='center';g.fillStyle=PW;
-  if(state=='title'){
-   g.fillText('MINI RAMP',W/2,40);g.fillStyle=PL;
-   g.fillText('L/R PUMP / LEAN',W/2,54);g.fillText('UP/DOWN BACK-FRONT',W/2,65);g.fillText('A FLIP D GRAB S SPIN',W/2,76);g.fillText('W STALL OR SLIDE',W/2,87);
-  }else{g.fillText('TIME UP',W/2,56);g.fillStyle=PL;g.fillText('SCORE '+score,W/2,72)}
-  if((tt*2|0)%2==0){g.fillStyle=PW;g.fillText('PRESS SPACE',W/2,104)}
- }
+ if(state=='menu')menu();
+ else if(state=='title'){rc(g,PW,22,60,196,26);rc(g,PD,23,61,194,24);dth(g,23,61,194,24,PG);rc(g,PD,26,64,188,18);g.textAlign='center';if((tt*2|0)%2==0){g.fillStyle=PW;g.fillText('PUSH ANY BUTTON TO START',W/2,69)}}
+ else if(state=='over'){rc(g,PW,30,40,180,66);rc(g,PD,31,41,178,64);dth(g,31,41,178,64,PG);rc(g,PD,35,45,170,56);g.textAlign='center';g.fillStyle=PW;g.fillText('TIME UP',W/2,56);g.fillStyle=PL;g.fillText('SCORE '+score,W/2,72);if((tt*2|0)%2==0){g.fillStyle=PW;g.fillText('PUSH ANY BUTTON',W/2,90)}}
 }
-/* ---------- gear: headwear, shirts, pants, decks, wheels (chosen in the menu after START) ---------- */
+/* ---------- gear: headwear, shirts, pants, decks, wheels (chosen in the MENU) ---------- */
 const HATS=[['NONE',null],
  ['BEANIE',[[-3,10,'DWWD'],[-2,10,'DWWD'],[-1,9,'DGGGGD'],[0,8,'DGGGGGGD'],[1,7,'DGGGGGGGGD'],[2,7,'DLLLLLLLLD']]],
- ['CAP',[[-1,9,'DWWWWD'],[0,8,'DWWWWWWD'],[1,7,'DWWWWWWWWD'],[2,7,'DGGGGGGGGD'],[3,8,'DGGGGGGD']]],
+ ['CAP',[[-1,9,'DWWWWD'],[0,8,'DWWWWWWD'],[1,7,'DWWWWWWWWD'],[2,7,'DGGGGGGGGD'],[3,8,'DGGGGGGD']],[[-1,9,'DWWWWD'],[0,8,'DWWWWWWD'],[1,7,'DWWWWWWWWD'],[2,7,'DGGGGGGGGD']]],
  ['BUCKET',[[-1,9,'DLLLLD'],[0,8,'DLLLLLLD'],[1,8,'DGGGGGGD'],[2,5,'DLLLLLLLLLLLLD']]],
  ['HEADBAND',[[2,7,'DLLLLLLLLD']]],
  ['HELMET',[[-1,9,'DGGGGD'],[0,8,'DGGGGGGD'],[1,7,'DGGGGGGGGD'],[2,7,'DGGGGGGGGD'],[3,7,'DGGGGGGGGD']]]];
@@ -351,65 +380,55 @@ function recol(cv,dk,wh){const o=document.createElement('canvas');o.width=cv.wid
   else if(d[i]==224&&d[i+1]==248&&d[i+2]==207){d[i]=b[0];d[i+1]=b[1];d[i+2]=b[2]}}
  x.putImageData(im,0,0);return o}
 function applyBoard(){RSB={};RSC={};gv++;const dk=DECKS[gear[3]][1],wh=WHEELS[gear[4]][1];BD=recol(BD0,dk,wh);BE=recol(BE0,dk,wh);for(const a in BC0)BC[a]=recol(BC0[a],dk,wh)}
-function bake(){RSB={};RSC={};gv++;FR=FR0.map(im=>{if(!im.complete||!im.naturalWidth)return im;
+function bake(){RSB={};RSC={};gv++;FR=FR0.map((im,fi)=>{if(!im.complete||!im.naturalWidth)return im;
  const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(im,0,0);
- const id=x.getImageData(0,0,24,24),d=id.data,isG=(r,gg,b)=>(r==66&&gg==70&&b==63)||(r==53&&b==50)||(r==39&&gg==41&&b==36);
+ const id=x.getImageData(0,0,24,24),d=id.data,isG=(r,gg,b)=>(r==149&&gg==157&&b==142)||(r==112&&gg==118&&b==107)||(r==86&&gg==90&&b==82);
  let top=-1,lastG=-1;
  for(let y=0;y<24;y++)for(let xx=0;xx<24;xx++){const i=(y*24+xx)*4;if(!d[i+3])continue;if(top<0)top=y;if(isG(d[i],d[i+1],d[i+2]))lastG=y}
  const sh=SHIRTS[gear[1]][1],pn=PANTS[gear[2]][1],set=(i,h)=>{const v=rgb(h);d[i]=v[0];d[i+1]=v[1];d[i+2]=v[2]};
  for(let y=0;y<24;y++)for(let xx=0;xx<24;xx++){const i=(y*24+xx)*4;if(!d[i+3])continue;const r=d[i],gg=d[i+1],b=d[i+2];
-  if(sh){if(r==66&&gg==70)set(i,sh[0]);else if(r==53&&b==50)set(i,sh[1]);else if(r==39&&gg==41)set(i,sh[2])}
+  if(sh){if(r==149&&gg==157)set(i,sh[0]);else if(r==112&&gg==118)set(i,sh[1]);else if(r==86&&gg==90)set(i,sh[2])}
   if(pn&&y>lastG&&xx>=8&&xx<=15){if(r==7&&gg==24)set(i,pn[0]);else if(r==5&&gg==18)set(i,pn[1])}}
  x.putImageData(id,0,0);
- for(const [r,cc,s] of HATS[gear[0]][1]||[])for(let i=0;i<s.length;i++){x.fillStyle=PC[s[i]];x.fillRect(cc+i,top+r,1,1)}
+ for(const [r,cc,s] of (fi>=4&&HATS[gear[0]][2])||HATS[gear[0]][1]||[])for(let i=0;i<s.length;i++){x.fillStyle=PC[s[i]];x.fillRect(cc+i,top+r,1,1)}
  c.complete=true;return c})}
 function saveGear(){try{localStorage.setItem('rampGear',gear.join(','))}catch(e){}}
-function menuKey(k){const n=GEAR.length;
+function menuKey(k){const n=GEAR.length+1; // row 0 = level, the other rows = outfit
  if(k=='u')gi=(gi+n-1)%n;else if(k=='n')gi=(gi+1)%n;
- else if(k=='l'||k=='r'){const L=GEAR[gi][1].length;gear[gi]=(gear[gi]+(k=='r'?1:L-1))%L;if(gi<3)baked=false;else applyBoard();saveGear()}}
+ else if(k=='l'||k=='r'){const d=k=='r'?1:-1;
+  if(gi==0){setLevel((lv+d+LEVELS.length)%LEVELS.length);lvChanged=1;try{localStorage.setItem('rampLevel',lv)}catch(e){}}
+  else{const r=gi-1,L=GEAR[r][1].length;gear[r]=(gear[r]+d+L)%L;if(r<3)baked=false;else applyBoard();saveGear()}}}
 try{const v=(localStorage.getItem('rampGear')||'').split(',').map(Number);if(v.length==5)gear=v.map((n,i)=>n>=0&&n<GEAR[i][1].length?n:0);if(gear[3]||gear[4])applyBoard()}catch(e){}
 function menu(){
  rc(g,PW,6,8,228,118);rc(g,PD,7,9,226,116);dth(g,7,9,226,116,PG);rc(g,PD,10,12,220,110);
- T('GEAR UP',120,16,PW,'center');
- GEAR.forEach((r,i)=>{const y=34+i*15,sel=i==gi;
-  T(r[0],14,y,sel?PW:PL,'left');T('<',78,y,sel?PW:PG,'center');T(r[1][gear[i]][0],118,y,sel?PW:PL,'center');T('>',158,y,sel?PW:PG,'center');
+ T('MENU',120,16,PW,'center');
+ [['LEVEL',LEVELS[lv][0]],...GEAR.map((r,i)=>[r[0],r[1][gear[i]][0]])].forEach(([nm,val],i)=>{const y=30+i*13,sel=i==gi;
+  T(nm,14,y,sel?PW:PL,'left');T('<',78,y,sel?PW:PG,'center');T(val,118,y,sel?PW:PL,'center');T('>',158,y,sel?PW:PG,'center');
   if(sel)rc(g,PW,9,y+3,2,2)});
- g.save();g.translate(204,98);g.scale(2,2);g.drawImage(BD,-8,-6);const f=SEQ[(tt/.083|0)%5];if(FR[f].complete)g.drawImage(FR[f],-12,-26);g.restore();
- if((tt*2|0)%2==0)T('PRESS SPACE TO SKATE',120,112,PW,'center');
+ g.save();g.translate(204,98);g.scale(2,2);g.drawImage(BD,-8,-6);const f=(tt/.125|0)%4;if(FR[f].complete)g.drawImage(FR[f],-12,-26);g.restore();
+ if((tt*2|0)%2==0)T('SPACE / ESC: BACK',120,112,PW,'center');
 }
 /* ---------- level select ---------- */
 const LEVELS=[['BIG RAMP',44,80,160,232],['HALF RAMP',22,79,161,175]]; // name, radius, flat start, flat end, top speed
 let lv=0;
 function setLevel(i){lv=lvi=i;const L=LEVELS[i];R=L[1];CX1=L[2];CX2=L[3];VMAX=L[4];YC=FL-R;DECK=YC-6;LO=CX1-R;HI=CX2+R;build();reset()}
-function levelKey(k){const n=LEVELS.length;
- if(k=='l'||k=='u')setLevel((lv+n-1)%n);else if(k=='r'||k=='n')setLevel((lv+1)%n);else return;
- try{localStorage.setItem('rampLevel',lv)}catch(e){}}
 try{const sv=+localStorage.getItem('rampLevel');if(sv>0&&sv<LEVELS.length)setLevel(sv)}catch(e){}
-function levelMenu(){
- rc(g,PW,6,8,228,118);rc(g,PD,7,9,226,116);dth(g,7,9,226,116,PG);rc(g,PD,10,12,220,110);
- T('SELECT LEVEL',120,16,PW,'center');
- LEVELS.forEach((L,i)=>{const x0=16+i*110,sel=i==lv,mid=x0+50,base=92,k=.4;
-  rc(g,sel?PW:PG,x0-2,30,104,70);rc(g,PD,x0,32,100,66);
-  for(let x=L[2]-L[1];x<=L[3]+L[1];x++){const d=x<L[2]?x-L[2]:x>L[3]?x-L[3]:0,h=L[1]-Math.sqrt(Math.max(0,L[1]*L[1]-d*d)),px=Math.round(mid+(x-120)*k),py=Math.round(base-h*k);
-   rc(g,PG,px,py+1,1,base-py);rc(g,PW,px,py,1,1)}
-  const top=Math.round(base-L[1]*k),a=Math.round(mid+(L[2]-L[1]-120)*k),b=Math.round(mid+(L[3]+L[1]-120)*k);
-  rc(g,PL,x0+4,top,a-x0-4,1);rc(g,PG,x0+4,top+1,a-x0-4,base-top);rc(g,PL,b,top,x0+96-b,1);rc(g,PG,b,top+1,x0+96-b,base-top);
-  rc(g,PW,x0+4,base,92,2);
-  T(L[0],mid,104,sel?PW:PL,'center')});
- if((tt*2|0)%2==0)T('< > CHOOSE  SPACE: GO',120,114,PW,'center');
-}
-// back to the main menu from anywhere (MENU button or Esc)
-function toMenu(){for(const k in keys)keys[k]=0;state='title';reset();pop={t:9,s:''}}
-document.getElementById('menub').onclick=e=>{toMenu();e.target.blur()};
-addEventListener('keydown',e=>{if(e.key=='Escape')toMenu()});
-const bgf=document.getElementById('bgf');
-function setBG(url,save){const im=new Image();im.onload=()=>{CBG=im;build();if(save){try{localStorage.setItem('rampBG',url)}catch(e){}}};im.src=url}
-document.getElementById('bgb').onclick=()=>bgf.click();
-document.getElementById('bgr').onclick=()=>{CBG=null;build();try{localStorage.removeItem('rampBG')}catch(e){}};
-bgf.onchange=()=>{const f=bgf.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{setBG(r.result,1);bgf.value=''};r.readAsDataURL(f)};
-try{const sv=localStorage.getItem('rampBG');if(sv)setBG(sv,0)}catch(e){}
+// MENU button / Esc: level + outfit menu (a run in progress is paused; changing the level starts a new run)
+function openMenu(){for(const k in keys)keys[k]=0;menuFrom=state;lvChanged=0;gi=0;state='menu'}
+function closeMenu(){for(const k in keys)keys[k]=0;if(menuFrom=='play'){if(lvChanged)reset();state='play'}else state=menuFrom=='over'?'title':menuFrom}
+function toggleMenu(){if(state=='menu')closeMenu();else openMenu()}
+document.getElementById('menub').onclick=e=>{toggleMenu();e.target.blur()};
+cv.addEventListener('pointerdown',()=>{if(state=='title'||state=='over')start()}); // tapping the game starts it too
+// F1 help menu (pauses the game); Esc closes it first, then goes back to the main menu
+function toggleHelp(){helpOpen=!helpOpen;for(const k in keys)keys[k]=0;document.getElementById('help').hidden=!helpOpen;if(helpOpen)document.getElementById('helpx').focus()}
+addEventListener('keydown',e=>{if(e.key=='F1'){e.preventDefault();toggleHelp()}else if(e.key=='Escape'){if(helpOpen)toggleHelp();else toggleMenu()}});
+document.getElementById('helpb').onclick=e=>{toggleHelp();e.target.blur()};
+document.getElementById('helpx').onclick=()=>toggleHelp();
+{const pad=document.getElementById('pad'),setPad=on=>{pad.style.display=on?'':'none';try{localStorage.setItem('rampPad',on?1:0)}catch(e){}fit()};
+ try{if(localStorage.getItem('rampPad')=='0')pad.style.display='none'}catch(e){}
+ document.getElementById('padb').onclick=e=>{setPad(pad.style.display=='none');e.target.blur()}}
 let last=performance.now();
-function loop(now){if(!baked&&FR0.every(i=>i.complete&&i.naturalWidth)){bake();baked=true}const dt=Math.min(.033,(now-last)/1000);last=now;tt+=dt;pop.t+=dt;upd(dt);draw();requestAnimationFrame(loop)}
+function loop(now){if(!baked&&FR0.every(i=>i.complete&&i.naturalWidth)){bake();baked=true}const dt=Math.min(.033,(now-last)/1000);last=now;tt+=dt;pop.t+=dt;if(!helpOpen)upd(dt);draw();requestAnimationFrame(loop)}
 addEventListener('resize',fit);fit();
 requestAnimationFrame(loop);
 </script></body></html>
