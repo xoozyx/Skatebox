@@ -18,6 +18,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;box-shadow:0 0 0 4p
 #join input{font:inherit;font-weight:bold;background:#0b1410;color:#e8b300;border:3px solid #3b6b4c;padding:.3em .5em;text-align:center;width:11em}
 #join button{font:inherit;font-weight:bold;background:#1d3326;color:#e0f8cf;border:3px solid #3b6b4c;padding:.35em .8em;cursor:pointer;margin:0 .3em}
 #join button:hover{border-color:#e8b300}
+#jn-url{width:22em;font-size:.75em}
+#jn-status{font-size:.75em;opacity:.7;text-align:center;max-width:90%}
 #jn-msg{font-size:.8em;opacity:.8;min-height:1.3em;text-align:center}
 #hint{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-weight:bold;font-size:clamp(12px,2vw,22px);color:#e8b300;text-shadow:2px 2px 0 #071821;pointer-events:none;line-height:1.2}#hint:empty{display:none}
 #fade{position:absolute;inset:0;background:#071821;opacity:0;pointer-events:none;transition:opacity .22s}
@@ -38,7 +40,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;box-shadow:0 0 0 4p
 @media (pointer:coarse){#pad{display:flex}}
 </style></head><body>
 <div id="wrap"><canvas id="c"></canvas><div id="names"></div><div id="pop"></div><div id="hint"></div><div id="fade"></div><div id="shop"><div class="sh-title">SKATE SHOP</div><div class="sh-body"><div id="sh-list"></div><canvas id="pv" width="40" height="36"></canvas></div><div class="sh-foot">&uarr;&darr; choose &middot; &larr;&rarr; change &middot; ENTER / ESC to close</div></div>
-<div id="join"><div class="sh-title">PLAY ONLINE?</div><div>YOUR NAME</div><input id="jn-name" maxlength="12" autocomplete="off" spellcheck="false"><div><button id="jn-on">PLAY ONLINE</button><button id="jn-off">PLAY OFFLINE</button></div><div id="jn-msg"></div></div></div>
+<div id="join"><div class="sh-title">PLAY ONLINE?</div><div>YOUR NAME</div><input id="jn-name" maxlength="12" autocomplete="off" spellcheck="false"><div id="jn-urlrow" style="display:none;text-align:center"><div>DATABASE URL</div><input id="jn-url" autocomplete="off" spellcheck="false" placeholder="https://your-project-default-rtdb...."></div><div><button id="jn-on">PLAY ONLINE</button><button id="jn-off">PLAY OFFLINE</button></div><div id="jn-status"></div><div id="jn-msg"></div></div></div>
 <div id="hud"><span>SCORE <b id="sc">0</b></span><span>COMBO <b id="cb">x1</b></span><span>BEST AIR <b id="ba">0</b></span><span>MODE <b id="md">RIDE</b></span><span>PLAYERS <b id="pl">1</b></span></div>
 <div id="help">Arrows: hold to push off, tap a side arrow to steer, hold the opposite arrow to brake &middot; S: ollie &middot; A: kickflip (A+&uarr; heelflip, A+&darr; pop shove-it) &middot; D: grab (tap it on the ground or in the air, hold to keep it) &middot; W: 50-50 grind (W+&uarr; nosegrind, W+&darr; 5-0), press near a ledge &middot; Q: ride / walk (on foot: arrows move, S jumps, E picks up / puts down a kicker; you hold it on the side you're facing) &middot; ENTER: skate shop (or E at the shop door in the hub) &middot; R: reset<br>Ride left into a kicker and press S or A just before the lip for extra pop. Rails grind like ledges. Near a quarter pipe's lip, W is a rock to fakie (W+Left nose stall, W+Right tail stall, W+Up axle stall, W+Down FS axle stall); hold W to hold a stall, S pops you out. Hit a quarter pipe fast enough and you launch off its lip. Spins need S: press S together with Up (frontside) or Down (backside) to spin 180, keep holding the arrow to go on to 360, 540, 720 and 900. Land flips and spins cleanly or you bail!</div>
 <div id="pad"><div class="grp"><span></span><button data-k="up">&uarr;</button><span></span><button data-k="left">&larr;</button><button data-k="down">&darr;</button><button data-k="right">&rarr;</button></div>
@@ -485,7 +487,7 @@ function draw(){
 
 // ---- multiplayer (Firebase Realtime Database, or a same-browser test mode with ?local=1) ----
 const FBCFG=window.SKATE_FIREBASE||{},LOCALMODE=/[?&]local=1/.test(location.search),CAP=(LOCALMODE&&/[?&]cap=(\d+)/.exec(location.search))?+/[?&]cap=(\d+)/.exec(location.search)[1]:25, // CAP: most players online at once (the database rules enforce 25)
- MP=!!((FBCFG.apiKey&&FBCFG.databaseURL)||LOCALMODE);
+ MP=true; // the online / offline screen is always shown at startup
 const ST=['ground','air','grind','stall','bail'],STK=['','rock','nose','tail','axle','fsaxle'],GT=['fifty','nose','five0'],TR=['kick','heel','shove'];
 const loadScript=u=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('could not load '+u));document.head.appendChild(s)});
 async function makeFirebaseBackend(cfg){
@@ -591,13 +593,32 @@ function drawRiders(){const list=[{y:P.y,me:1}];for(const id in NET.others)list.
 async function netJoin(){
  const nm=($('jn-name').value||'RIDER').replace(/[^\w \-.]/g,'').trim().slice(0,12)||'RIDER';try{localStorage.setItem('skateName',nm)}catch(e){}
  $('jn-msg').textContent='Connecting...';
- try{NET.name=nm;NET.be=LOCALMODE?makeLocalBackend():await makeFirebaseBackend(FBCFG);NET.slot=await NET.be.claimSlot(CAP);if(NET.slot<0){NET.be=null;throw new Error('FULL')}NET.on=true;NET.loc=null;netEnter(locId);
+ try{NET.name=nm;
+  if(!LOCALMODE&&(!window.SKATE_FIREBASE||!FBCFG.apiKey))throw new Error('NOCONFIG');
+  const cfg=Object.assign({},FBCFG),url=(($('jn-url').value||'').trim()||FBCFG.databaseURL||'');
+  if(url)cfg.databaseURL=url;else if(FBCFG.projectId)cfg.databaseURL='https://'+FBCFG.projectId+'-default-rtdb.firebaseio.com'; // the default address (US region)
+  const connect=async()=>{const be=LOCALMODE?makeLocalBackend():await makeFirebaseBackend(cfg);const s=await be.claimSlot(CAP);if(s<0)throw new Error('FULL');return{be,s}};
+  const r=await Promise.race([connect(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT')),12000))]);
+  NET.be=r.be;NET.slot=r.s;try{if(cfg.databaseURL&&!LOCALMODE)localStorage.setItem('skateDbUrl',cfg.databaseURL)}catch(e){}
+  NET.on=true;NET.loc=null;netEnter(locId);
   $('join').classList.remove('on');trans=false;popup('ONLINE','#e8b300')}
- catch(e){console.error(e);NET.on=false;const m=String(e&&e.message?e.message:e);
-  $('jn-msg').textContent=m==='FULL'?'The server is full ('+CAP+' players online). Try again later - you can still play offline.':/PERMISSION_DENIED|permission/i.test(m)?'The database rules need updating (see MULTIPLAYER_SETUP.md) - you can still play offline.':'Could not connect: '+m+' - you can still play offline.'}}
+ catch(e){console.error(e);NET.on=false;const m=String(e&&e.message?e.message:e),off=' You can still play offline.';
+  $('jn-msg').textContent=m==='FULL'?'The server is full ('+CAP+' players online). Try again later.'+off
+   :m==='NOCONFIG'?'Online is not set up: put your Firebase settings in firebase-config.js next to index.html (see MULTIPLAYER_SETUP.md).'+off
+   :m==='TIMEOUT'?'No answer from the database after 12 seconds. Check the Realtime Database URL (shown at the top of the Realtime Database page in the Firebase console) and your internet connection.'+off
+   :/PERMISSION_DENIED|permission/i.test(m)?'The database rules need updating (see MULTIPLAYER_SETUP.md).'+off
+   :'Could not connect: '+m+'.'+off}}
 $('jn-on').onclick=netJoin;$('jn-name').onkeydown=e=>{if(e.key==='Enter')netJoin()};
 $('jn-off').onclick=()=>{$('join').classList.remove('on');trans=false};
-function showJoin(){let n='';try{n=localStorage.getItem('skateName')||''}catch(e){}$('jn-name').value=n;$('join').classList.add('on');trans=true;$('jn-name').focus()}
+function joinStatus(){
+ if(LOCALMODE)return 'Test mode: you can meet players in other tabs of this browser.';
+ if(!window.SKATE_FIREBASE)return 'Online is not set up: firebase-config.js was not found next to index.html.';
+ if(!FBCFG.apiKey)return 'Online is not set up yet: firebase-config.js has no keys in it (see MULTIPLAYER_SETUP.md).';
+ if(!FBCFG.databaseURL)return 'Online settings found, but the Realtime Database URL is missing: paste it below.';
+ return 'Online is ready ('+(FBCFG.projectId||'Firebase')+').'}
+function showJoin(){let n='',u='';try{n=localStorage.getItem('skateName')||'';u=localStorage.getItem('skateDbUrl')||''}catch(e){}$('jn-name').value=n;
+ const needUrl=!LOCALMODE&&!!FBCFG.apiKey&&!FBCFG.databaseURL;$('jn-urlrow').style.display=needUrl?'block':'none';if(needUrl)$('jn-url').value=u;
+ $('jn-status').textContent=joinStatus();$('jn-msg').textContent='';$('join').classList.add('on');trans=true;$('jn-name').focus()}
 addEventListener('beforeunload',()=>{if(NET.on&&NET.loc)try{if(P&&P.carry)dropCarry();NET.be.del(NET.loc);if(NET.be.release)NET.be.release()}catch(e){}});
 
 // ---- skate shop ----
