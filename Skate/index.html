@@ -127,8 +127,8 @@ const LH=6,LD=5; // ledge height and floor depth (px)
 const LEDGES=[]; // ledges and rails of the current location
 const kdir=k=>k.dir||-1; // -1: launches you to the left (sprite as drawn), 1: mirrored, launches right
 const kh=(k,x)=>{const lo=kdir(k)<0?k.x+2:k.x+12,hi=lo+10;return x<lo||x>hi?0:RAMP*(kdir(k)<0?hi-x:x-lo)/10};
-const kOn=(x,y)=>K.find(k=>k!==P.carry&&y>=k.y+14&&y<=k.y+23&&kh(k,x)>2)||null;
-const kickerH=(x,y)=>{let m=0;for(const k of K)if(k!==P.carry&&y>=k.y+14&&y<=k.y+23)m=Math.max(m,kh(k,x));return m};
+const kOn=(x,y)=>K.find(k=>k!==P.carry&&!k.hold&&y>=k.y+14&&y<=k.y+23&&kh(k,x)>2)||null;
+const kickerH=(x,y)=>{let m=0;for(const k of K)if(k!==P.carry&&!k.hold&&y>=k.y+14&&y<=k.y+23)m=Math.max(m,kh(k,x));return m};
 const ledgeAt=(x,y)=>LEDGES.find(l=>x>=l.x&&x<=l.x+l.w&&y>=l.y&&y<=l.y+LD)||null;
 const QX=14,QY=28,QH=6,SLOPEG=300; // quarter pipe: ramp length, width, lip height; SLOPEG = how hard the slope slows you
 const Q=[],SOL=[]; // quarter pipes (dir -1: lip on the left, 1: lip on the right) and solid blocks (buildings) of the current location
@@ -165,9 +165,10 @@ const LOCS={
    ctx.fillStyle='#071821';ctx.fillRect(4,170,8,1);ctx.fillRect(5,169,1,1);ctx.fillRect(5,171,1,1);ctx.fillRect(6,168,1,1);ctx.fillRect(6,172,1,1)}}};
 let LOC=null,locId='hub',trans=false;
 function loadLocation(id,sp){
+ if(P&&P.carry)dropCarry();
  const L=LOCS[id];LOC=L;locId=id;WW=L.w;WH=L.h;XMIN=L.x0;XMAX=L.x1;YMIN=L.y0;YMAX=L.y1;
  K.length=0;K0.length=0;LEDGES.length=0;Q.length=0;SOL.length=0;
- for(const k of L.kickers){K.push({x:k.x,y:k.y,dir:-1});K0.push({x:k.x,y:k.y})}
+ for(const k of L.kickers){K.push({x:k.x,y:k.y,dir:-1,id:K.length,c:'',hold:null,tx:k.x,ty:k.y});K0.push({x:k.x,y:k.y})}
  for(const l of L.ledges){const c=Object.assign({},l);if(c.kind==='rail'&&railImg)c.w=railImg.width;LEDGES.push(c)} // ledges are built from 32px pieces: use lengths of 32, 64, 96...
  for(const q of L.qps)Q.push(Object.assign({},q));for(const s of L.solids)SOL.push(s);
  for(const e of L.exits)e.in=true; // an exit only fires after you have stepped out of it and back in
@@ -186,7 +187,8 @@ function checkExits(){let near=null; // doors and exits of the current location
   else if(inside)near=e}
  const txt=near?near.label:'',h=$('hint');if(h.textContent!==txt)h.textContent=txt}
 let camX=null,camY=null,P;
-function reset(){FX.length=0;camX=camY=null;K.forEach((k,i)=>{k.x=K0[i].x;k.y=K0[i].y;k.dir=-1});P={x:LOC.spawn.x,y:LOC.spawn.y,z:0,vx:0,vy:0,vz:0,state:'ground',dir:{x:-1,y:0},face:-1,flip:-1,flipDone:false,jump:null,crouch:0,land:0,bail:0,ollieBuf:0,flipBuf:0,flipKind:'kick',trick:'kick',fdur:FLIPT,walk:false,wview:'front',stall:null,stallQ:null,sk:null,grabBuf:0,grabMin:0,trT:0,spin:0,spinTarget:0,spinDir:1,spinKey:null,fakie:false,carry:null,cox:0,coy:0,grindBuf:0,gk:null,gtype:'fifty',grabbing:false,ledge:null,gdir:1,gs:0,bob:0,bx:0,by:0,bvx:0,bvy:0};score=0;combo=1;best=0;hud()}
+function reset(){if(P&&P.carry)dropCarry();FX.length=0;camX=camY=null;if(!NET.on)K.forEach((k,i)=>{k.x=K0[i].x;k.y=K0[i].y;k.dir=-1}); // online, kickers stay where everyone left them
+ P={x:LOC.spawn.x,y:LOC.spawn.y,z:0,vx:0,vy:0,vz:0,state:'ground',dir:{x:-1,y:0},face:-1,flip:-1,flipDone:false,jump:null,crouch:0,land:0,bail:0,ollieBuf:0,flipBuf:0,flipKind:'kick',trick:'kick',fdur:FLIPT,walk:false,wview:'front',stall:null,stallQ:null,sk:null,grabBuf:0,grabMin:0,trT:0,spin:0,spinTarget:0,spinDir:1,spinKey:null,fakie:false,carry:null,cox:0,coy:0,grindBuf:0,gk:null,gtype:'fifty',grabbing:false,ledge:null,gdir:1,gs:0,bob:0,bx:0,by:0,bvx:0,bvy:0};score=0;combo=1;best=0;hud()}
 loadLocation('hub');reset();
 
 function startFlip(k){k=typeof k==='string'?k:'kick';P.trick=k;P.fdur=k==='shove'?.38:FLIPT;P.flip=0;if(P.jump)P.jump.trick=k;beep(k==='shove'?400:k==='heel'?600:520,.14,'square',.03,k==='heel'?-200:260)}
@@ -258,17 +260,18 @@ function useKey(){ // E on foot: pick up the nearest kicker / put it down
  const ex=LOC.exits.find(e=>!e.auto&&P.state==='ground'&&P.z<2&&P.x>=e.x0&&P.x<=e.x1&&P.y>=e.y0&&P.y<=e.y1);
  if(ex&&!P.carry){ex.act();return} // E at a door
  if(!P.walk||P.state!=='ground')return;
- if(P.carry){P.carry=null;popup('KICKER PLACED');beep(120,.06,'triangle',.06,-20);return}
+ if(P.carry){dropCarry();popup('KICKER PLACED');beep(120,.06,'triangle',.06,-20);return}
  if(P.z>1)return;
  let best=null,bd=24;for(const k of K){const d=Math.hypot(P.x-(k.x+(kdir(k)<0?7:17)),P.y-(k.y+18.5));if(d<bd){bd=d;best=k}}
- if(best){P.carry=best;P.cox=best.x-P.x;P.coy=best.y-P.y;popup('CARRYING KICKER (E to put down)');beep(300,.06,'square',.04,80)}}
+ if(best){const stolen=!!best.hold;P.carry=best;P.cox=best.x-P.x;P.coy=best.y-P.y;netKPick(best);popup(stolen?'TOOK THE KICKER!':'CARRYING KICKER (E to put down)');beep(300,.06,'square',.04,80)} // near someone else's kicker, E takes it from them
+}
 function moveCarried(dt){const k=P.carry;k.dir=P.face; // held on the side you face: walk right = right hand, walk left = left hand
  const tx=P.face>0?-6:-18,ty=-18,st=260*dt; // target offset from your feet; the kicker swings over smoothly
  P.cox+=clamp(tx-P.cox,-st,st);P.coy+=clamp(ty-P.coy,-st,st);
  // kicker keeps its offset from the player; the player is held back at the world edge
  const kx=clamp(Math.round(P.x+P.cox),14,WW-26),ky=clamp(Math.round(P.y+P.coy),14,WH-38);
  P.x=kx-P.cox;P.y=ky-P.coy;k.x=kx;k.y=ky}
-function toggleWalk(){if(P.state!=='ground')return;P.walk=!P.walk;P.carry=null;P.vx=P.vy=0;P.bob=0;P.ollieBuf=P.flipBuf=P.grindBuf=0;hud();beep(P.walk?330:220,.08,'square',.04,P.walk?-80:120)}
+function toggleWalk(){if(P.state!=='ground')return;if(P.carry)dropCarry();P.walk=!P.walk;P.vx=P.vy=0;P.bob=0;P.ollieBuf=P.flipBuf=P.grindBuf=0;hud();beep(P.walk?330:220,.08,'square',.04,P.walk?-80:120)}
 const airLeft=()=>(P.vz+Math.sqrt(Math.max(0,P.vz*P.vz+2*G*(P.z-groundH(P.x,P.y)))))/G; // seconds of air left
 const spinPop=()=>popup((P.spinDir>0?'FS ':'BS ')+P.spinTarget,'#e8b300');
 function startSpin(n){if(P.spinTarget>0||airLeft()<.2)return; // Up = frontside, Down = backside
@@ -460,7 +463,7 @@ function drawLedge(l){
  ctx.fillStyle='#565a52';ctx.fillRect(l.x,ty+LD,l.w,LH);
  ctx.fillStyle='#e0f8cf';ctx.fillRect(l.x,ty,l.w,1)}
 
-const drawK=k=>{const x=Math.round(k.x),y=Math.round(k.y)-(P.carry===k?2:0); // a carried kicker is lifted 2px
+const drawK=k=>{const x=Math.round(k.x),y=Math.round(k.y)-(P.carry===k||k.hold?2:0); // a carried kicker is lifted 2px
  if(kdir(k)<0)ctx.drawImage(kk,x,y);else{ctx.save();ctx.translate(x+24,y);ctx.scale(-1,1);ctx.drawImage(kk,0,0);ctx.restore()}};
 function draw(){
  ctx.setTransform(SC,0,0,SC,0,0);
@@ -481,29 +484,48 @@ function draw(){
  ctx.restore()}
 
 // ---- multiplayer (Firebase Realtime Database, or a same-browser test mode with ?local=1) ----
-const FBCFG=window.SKATE_FIREBASE||{},LOCALMODE=/[?&]local=1/.test(location.search),MP=!!((FBCFG.apiKey&&FBCFG.databaseURL)||LOCALMODE);
+const FBCFG=window.SKATE_FIREBASE||{},LOCALMODE=/[?&]local=1/.test(location.search),CAP=(LOCALMODE&&/[?&]cap=(\d+)/.exec(location.search))?+/[?&]cap=(\d+)/.exec(location.search)[1]:25, // CAP: most players online at once (the database rules enforce 25)
+ MP=!!((FBCFG.apiKey&&FBCFG.databaseURL)||LOCALMODE);
 const ST=['ground','air','grind','stall','bail'],STK=['','rock','nose','tail','axle','fsaxle'],GT=['fifty','nose','five0'],TR=['kick','heel','shove'];
 const loadScript=u=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('could not load '+u));document.head.appendChild(s)});
 async function makeFirebaseBackend(cfg){
  const V='10.12.2',B='https://www.gstatic.com/firebasejs/'+V+'/';
  await loadScript(B+'firebase-app-compat.js');await loadScript(B+'firebase-auth-compat.js');await loadScript(B+'firebase-database-compat.js');
- firebase.initializeApp(cfg);const cred=await firebase.auth().signInAnonymously(),db=firebase.database(),uid=cred.user.uid,ref=loc=>db.ref('players/'+loc+'/'+uid);
+ firebase.initializeApp(cfg);const cred=await firebase.auth().signInAnonymously(),db=firebase.database(),uid=cred.user.uid,ref=loc=>db.ref('players/'+loc+'/'+uid);let slot=-1;
  return{uid,
+  async claimSlot(max){ // the player cap: numbered slots 0..max-1; the database rules only let a signed-in player take a free one
+   const occ=(await db.ref('slots').once('value')).val()||{},free=[];for(let n=0;n<max;n++)if(!occ[n])free.push(n);
+   for(const n of free){const r=db.ref('slots/'+n),res=await r.transaction(cur=>cur===null||cur===uid?uid:undefined);
+    if(res.committed&&res.snapshot.val()===uid){slot=n;r.onDisconnect().remove();return n}}
+   return -1},
+  release(){if(slot>=0){db.ref('slots/'+slot).remove();slot=-1}},
   set(loc,v){const r=ref(loc);r.set(v);r.onDisconnect().remove()},   // your rider; removed automatically when you disconnect
   upd(loc,d){ref(loc).update({d})},                                  // only the changing part is sent
   del(loc){ref(loc).remove()},
-  listen(loc,cb){const r=db.ref('players/'+loc),f=r.on('value',s=>cb(s.val()||{}));return()=>r.off('value',f)}}}
+  listen(loc,cb){const r=db.ref('players/'+loc),f=r.on('value',s=>cb(s.val()||{}));return()=>r.off('value',f)},
+  kset(loc,id,v){db.ref('kickers/'+loc+'/'+id).set(v)},             // a shared kicker: x, y, direction, and who carries it
+  karm(loc,id){db.ref('kickers/'+loc+'/'+id).onDisconnect().update({c:''})},   // if you disconnect while carrying one, it is put down
+  kdisarm(loc,id){db.ref('kickers/'+loc+'/'+id).onDisconnect().cancel()},
+  klisten(loc,cb){const r=db.ref('kickers/'+loc),f=r.on('value',s=>cb(s.val()||{}));return()=>r.off('value',f)}}}
 function makeLocalBackend(){ // a fake database shared by tabs of one browser, for trying multiplayer without Firebase
- const uid='L'+Math.random().toString(36).slice(2,8),ch=new BroadcastChannel('skate-local'),db={},subs={};let mine=null;
- const emit=loc=>{if(subs[loc])subs[loc](JSON.parse(JSON.stringify(db[loc]||{})))};
- const put=(loc,u,v)=>{(db[loc]=db[loc]||{})[u]=v;emit(loc)},drop=(loc,u)=>{if(db[loc]){delete db[loc][u];emit(loc)}};
- ch.onmessage=e=>{const m=e.data;if(m.t==='set')put(m.loc,m.uid,m.v);else if(m.t==='del')drop(m.loc,m.uid);else if(m.t==='hello'&&mine)ch.postMessage({t:'set',loc:mine.loc,uid,v:mine.v})};
+ const uid='L'+Math.random().toString(36).slice(2,8),ch=new BroadcastChannel('skate-local'),db={},kdb={},slots={},subs={},ksubs={};let mine=null,slot=-1;
+ const emit=loc=>{if(subs[loc])subs[loc](JSON.parse(JSON.stringify(db[loc]||{})))},kemit=loc=>{if(ksubs[loc])ksubs[loc](JSON.parse(JSON.stringify(kdb[loc]||{})))};
+ const put=(loc,u,v)=>{(db[loc]=db[loc]||{})[u]=v;emit(loc)},drop=(loc,u)=>{if(db[loc]){delete db[loc][u];emit(loc)}},kput=(loc,id,v)=>{(kdb[loc]=kdb[loc]||{})[id]=v;kemit(loc)};
+ ch.onmessage=e=>{const m=e.data;
+  if(m.t==='set')put(m.loc,m.uid,m.v);else if(m.t==='del')drop(m.loc,m.uid);else if(m.t==='kset')kput(m.loc,m.id,m.v);
+  else if(m.t==='slot')slots[m.n]=m.uid;else if(m.t==='unslot')delete slots[m.n];
+  else if(m.t==='hello'){if(mine)ch.postMessage({t:'set',loc:mine.loc,uid,v:mine.v});if(slot>=0)ch.postMessage({t:'slot',n:slot,uid});
+   for(const loc in kdb)for(const id in kdb[loc])ch.postMessage({t:'kset',loc,id,v:kdb[loc][id]})}};
  ch.postMessage({t:'hello'});
  return{uid,
+  async claimSlot(max){await new Promise(r=>setTimeout(r,150));for(let n=0;n<max;n++)if(!slots[n]){slots[n]=uid;slot=n;ch.postMessage({t:'slot',n,uid});return n}return -1},
+  release(){if(slot>=0){delete slots[slot];ch.postMessage({t:'unslot',n:slot});slot=-1}},
   set(loc,v){mine={loc,v:Object.assign({},v)};put(loc,uid,mine.v);ch.postMessage({t:'set',loc,uid,v:mine.v})},
   upd(loc,d){if(!mine)return;mine.v.d=d;put(loc,uid,mine.v);ch.postMessage({t:'set',loc,uid,v:mine.v})},
   del(loc){if(mine&&mine.loc===loc)mine=null;drop(loc,uid);ch.postMessage({t:'del',loc,uid})},
-  listen(loc,cb){subs[loc]=cb;emit(loc);return()=>{delete subs[loc]}}}}
+  listen(loc,cb){subs[loc]=cb;emit(loc);return()=>{delete subs[loc]}},
+  kset(loc,id,v){kput(loc,id,v);ch.postMessage({t:'kset',loc,id,v})},karm(){},kdisarm(){},
+  klisten(loc,cb){ksubs[loc]=cb;kemit(loc);return()=>{delete ksubs[loc]}}}}
 const outfitStr=()=>[OUT.shape,OUT.bcol,OUT.hat,OUT.shirt,OUT.pants].join(',');
 function packFor(s){if(!PACKS[s]){const L=[SHAPES,BCOL,HATS,SHIRTS,PANTS],a=String(s).split(',').map(Number);
  PACKS[s]=buildPack({shape:0,bcol:0,hat:0,shirt:0,pants:0,...Object.fromEntries(['shape','bcol','hat','shirt','pants'].map((k,i)=>[k,Math.max(0,Math.min(L[i].length-1,a[i]|0))]))})}return PACKS[s]}
@@ -533,15 +555,28 @@ function netSnap(snap){const now=performance.now();
   if(r.raw!==v.d){r.raw=v.d;r.seen=now;netDecode(r,v.d)}}
  for(const uid in NET.others)if(!(uid in snap))netRemove(uid);
  netCount()}
-function netPush(){if(NET.on&&NET.loc)NET.be.set(NET.loc,{n:NET.name,o:outfitStr(),d:netEncode()})}
+function netKWrite(k,carrier){k.c=carrier;NET.be.kset(NET.loc,'k'+k.id,{x:Math.round(k.x),y:Math.round(k.y),d:kdir(k),c:carrier})}
+function netKSend(k){const s=Math.round(k.x)+','+Math.round(k.y)+','+kdir(k);if(k.lastSent===s)return;k.lastSent=s;netKWrite(k,NET.be.uid)} // the carrier keeps the shared kicker moving
+function netKPick(k){if(!NET.on||!NET.loc)return;k.hold=null;k.lastSent='';NET.be.karm(NET.loc,'k'+k.id);netKWrite(k,NET.be.uid)}
+function netKDrop(k){if(!NET.on||!NET.loc)return;k.ignoreUntil=performance.now()+700;k.tx=k.x;k.ty=k.y;NET.be.kdisarm(NET.loc,'k'+k.id);netKWrite(k,'')}
+function dropCarry(){const k=P.carry;if(!k)return;P.carry=null;netKDrop(k)}
+function netKSnap(snap){const me=NET.be.uid,now=performance.now();
+ for(const k of K){const v=snap['k'+k.id];if(!v||typeof v.x!=='number')continue;
+  const c=typeof v.c==='string'?v.c:'';
+  if(P.carry===k){if(c&&c!==me){P.carry=null;NET.be.kdisarm(NET.loc,'k'+k.id);k.c=c;k.tx=v.x;k.ty=v.y;popup('KICKER TAKEN!','#ff6a5c')}continue} // someone took it from you
+  k.c=c;if(now<(k.ignoreUntil||0))continue;
+  k.tx=v.x;k.ty=v.y;k.dir=v.d<0?-1:1}}
+function netPush(){if(NET.on&&NET.loc)NET.be.set(NET.loc,{n:NET.name,o:outfitStr(),d:netEncode(),s:NET.slot})}
 function netEnter(loc){ // join the room of a location
- if(!NET.on)return;if(NET.unsub)NET.unsub();if(NET.loc)NET.be.del(NET.loc);
+ if(!NET.on)return;if(NET.unsub)NET.unsub();if(NET.kunsub)NET.kunsub();if(NET.loc)NET.be.del(NET.loc);
  for(const id of Object.keys(NET.others))netRemove(id);
- NET.loc=loc;NET.last='';netPush();NET.unsub=NET.be.listen(loc,netSnap)}
+ NET.loc=loc;NET.last='';netPush();NET.unsub=NET.be.listen(loc,netSnap);NET.kunsub=NET.be.klisten(loc,netKSnap)}
 function netTick(dt){
  if(!NET.on||!NET.loc)return;const now=performance.now();
- NET.acc+=dt;if(NET.acc>=.1){NET.acc=0;NET.hb=Math.floor(now/1000)%1000;const d=netEncode();if(d!==NET.last){NET.last=d;NET.be.upd(NET.loc,d)}} // about 10 updates a second, 1 a second when standing still
- const k=1-Math.pow(.0005,dt);
+ NET.acc+=dt;if(NET.acc>=.1){NET.acc=0;NET.hb=Math.floor(now/1000)%1000;const d=netEncode();if(d!==NET.last){NET.last=d;NET.be.upd(NET.loc,d)}if(P.carry)netKSend(P.carry)} // about 10 updates a second, 1 a second when standing still
+ const k=1-Math.pow(.0005,dt),kf=1-Math.pow(.001,dt);
+ for(const kk of K){kk.hold=(kk.c&&kk.c!==NET.be.uid&&NET.others[kk.c])?kk.c:null; // carried by someone who is here
+  if(P.carry!==kk&&kk.tx!==undefined){kk.x+=(kk.tx-kk.x)*kf;kk.y+=(kk.ty-kk.y)*kf;if(Math.abs(kk.tx-kk.x)<.3)kk.x=kk.tx;if(Math.abs(kk.ty-kk.y)<.3)kk.y=kk.ty}}
  for(const id of Object.keys(NET.others)){const r=NET.others[id];
   if(now-r.seen>6000){NET.dead[id]=r.raw;netRemove(id);continue}
   const pp=r.pp;pp.x+=(r.tx-pp.x)*k;pp.y+=(r.ty-pp.y)*k;pp.z+=(r.tz-pp.z)*k;
@@ -556,13 +591,14 @@ function drawRiders(){const list=[{y:P.y,me:1}];for(const id in NET.others)list.
 async function netJoin(){
  const nm=($('jn-name').value||'RIDER').replace(/[^\w \-.]/g,'').trim().slice(0,12)||'RIDER';try{localStorage.setItem('skateName',nm)}catch(e){}
  $('jn-msg').textContent='Connecting...';
- try{NET.name=nm;NET.be=LOCALMODE?makeLocalBackend():await makeFirebaseBackend(FBCFG);NET.on=true;NET.loc=null;netEnter(locId);
+ try{NET.name=nm;NET.be=LOCALMODE?makeLocalBackend():await makeFirebaseBackend(FBCFG);NET.slot=await NET.be.claimSlot(CAP);if(NET.slot<0){NET.be=null;throw new Error('FULL')}NET.on=true;NET.loc=null;netEnter(locId);
   $('join').classList.remove('on');trans=false;popup('ONLINE','#e8b300')}
- catch(e){console.error(e);NET.on=false;$('jn-msg').textContent='Could not connect: '+(e&&e.message?e.message:e)+' - you can still play offline.'}}
+ catch(e){console.error(e);NET.on=false;const m=String(e&&e.message?e.message:e);
+  $('jn-msg').textContent=m==='FULL'?'The server is full ('+CAP+' players online). Try again later - you can still play offline.':/PERMISSION_DENIED|permission/i.test(m)?'The database rules need updating (see MULTIPLAYER_SETUP.md) - you can still play offline.':'Could not connect: '+m+' - you can still play offline.'}}
 $('jn-on').onclick=netJoin;$('jn-name').onkeydown=e=>{if(e.key==='Enter')netJoin()};
 $('jn-off').onclick=()=>{$('join').classList.remove('on');trans=false};
 function showJoin(){let n='';try{n=localStorage.getItem('skateName')||''}catch(e){}$('jn-name').value=n;$('join').classList.add('on');trans=true;$('jn-name').focus()}
-addEventListener('beforeunload',()=>{if(NET.on&&NET.loc)try{NET.be.del(NET.loc)}catch(e){}});
+addEventListener('beforeunload',()=>{if(NET.on&&NET.loc)try{if(P&&P.carry)dropCarry();NET.be.del(NET.loc);if(NET.be.release)NET.be.release()}catch(e){}});
 
 // ---- skate shop ----
 function drawPreview(){const c=$('pv'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
@@ -607,6 +643,7 @@ document.querySelectorAll('#pad button').forEach(b=>{
 let last=performance.now();
 (function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;if(!shop.open&&!trans)update(dt);netTick(dt);draw();requestAnimationFrame(loop)})(last);
 if(MP)showJoin();
+if(LOCALMODE)window.__dbg={get P(){return P},K,NET,loadLocation}; // for testing
 }
 })();
 </script></body></html>
