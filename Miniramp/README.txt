@@ -23,8 +23,33 @@ QUICK CONTROLS
   A flip, D grab, S spin (every 180 turns him around: his back is shown), W near the
   coping = stall / grind / slide
 
+EDITING THE LEVEL ART (assets/levels/)  -  levels: BIG RAMP and SEWER (the half-size ramp)
+  Each level is two PNG layers, both 240x138 pixels (the game screen above the score bar).
+  The game draws them in this order: background -> ramp -> skater -> score bar.
+
+    big_background.png   sewer_background.png   the scene behind the ramp (beach: sky, hill, fence, crowd; sewer: brick tunnel, pipes, ooze)
+    big_ramp.png         sewer_ramp.png         the ramp itself: deck, riding surface, front face,
+                                               coping pipes, props. Transparent where there is no ramp.
+
+  Edit any of them in your pixel editor and save over the file (keep the name and 240x138 size).
+  Reload index.html (Ctrl+F5) and the game uses your picture instead of the built-in drawing.
+  Delete a file to go back to the built-in drawing for that layer. Each file is optional.
+
+  Reference files (the game does not load these):
+    big_guide.png  sewer_guide.png     transparent overlays for your editor. Magenta = the line his
+                                      wheels ride on, yellow dots = front/back edge of the riding
+                                      surface (depth), cyan crosses = the coping points where stalls
+                                      and grinds happen, orange ticks = where he launches off the lip.
+    big_full_preview.png  sewer_full_preview.png    both layers together, as the game shows them.
+
+  IMPORTANT: the shape of the ramp is also in the game's physics. You can repaint everything
+  (colours, textures, decks, pipes, scenery) but if you move the riding curve or the coping the
+  skater will no longer sit on your drawing - use the guide overlays to keep them in line.
+  The game's palette is #071821, #42463f, #a9bb9c, #e0f8cf (other colours work too).
+
 FILES
   index.html ................ the whole game (code, sprites, background and frame are embedded)
+  assets/levels/ ............ the level art layers and guides (see above)
   assets/fonts/ ............. Press Start 2P pixel font (SIL Open Font License, see OFL.txt)
   assets/Player_front.png ... front idle animation (4 frames)
   assets/Player_back.png .... back idle animation (4 frames, shown after a 180)

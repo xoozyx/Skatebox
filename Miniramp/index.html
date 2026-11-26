@@ -216,6 +216,8 @@ function pose(K,t,f,oy){let [A,cx,cy,lean]=kf(K,t);if(oy!==undefined)cy=oy;const
 
 /* ---------- static background (4-shade palette) ---------- */
 const bg=document.createElement('canvas');bg.width=W;bg.height=H;
+const LB=document.createElement('canvas'),RL=document.createElement('canvas');LB.width=RL.width=W;LB.height=RL.height=H; // the level is drawn in two layers: background scene, then the ramp
+const EXT=[{},{}]; // optional hand-made PNG layers (assets/levels/), see README
 const FONT="8px 'Press Start 2P',monospace";
 function rc(c,col,x,y,w,h){c.fillStyle=col;c.fillRect(x,y,w,h)}
 function dth(c,x,y,w,h,col){c.fillStyle=col;for(let j=0;j<h;j++)for(let i=j&1;i<w;i+=2)c.fillRect(x+i,y+j,1,1)}
@@ -225,8 +227,40 @@ function palm(c,x,y,h){
   for(let i=0;i<8;i++){const px=Math.round(x+dx*i),py=Math.round(y-h+dy*i+i*i*.07);rc(c,PD,px-1,py-1,3,3);rc(c,PG,px,py,1,1)}});
 }
 function cloud(c,x,y){rc(c,PW,x+2,y,7,1);rc(c,PW,x,y+1,14,2);rc(c,PW,x+2,y+3,10,1);dth(c,x+2,y+3,10,1,PL)}
+// ---- sewer level (TMNT vibes): brick tunnel, big pipes, ooze, a pizza box ----
+function hp(c,x,y,w,h){rc(c,PD,x,y-1,w,h+2);rc(c,PL,x,y,w,h);rc(c,PW,x,y,w,1);rc(c,PG,x,y+h-2,w,1);rc(c,PD,x,y+h-1,w,1)} // horizontal pipe
+function vp(c,x,y,w,h){rc(c,PD,x-1,y,w+2,h);rc(c,PL,x,y,w,h);rc(c,PW,x,y,1,h);rc(c,PG,x+w-2,y,1,h);rc(c,PD,x+w-1,y,1,h)} // vertical pipe
+function flange(c,x,y,w,h,v){if(v){rc(c,PD,x-2,y,w+4,4);rc(c,PG,x-1,y+1,w+2,2);rc(c,PW,x-1,y+1,w+2,1)}else{rc(c,PD,x,y-2,4,h+4);rc(c,PG,x+1,y-1,2,h+2);rc(c,PW,x+1,y-1,1,h+2)}}
+function valve(c,x,y){rc(c,PD,x-4,y-4,9,9);rc(c,PL,x-3,y-3,7,7);rc(c,PD,x-2,y-2,5,5);rc(c,PL,x,y-3,1,7);rc(c,PL,x-3,y,7,1);rc(c,PW,x,y,1,1)}
+function drip(c,x,y,n){for(let i=0;i<n;i++)rc(c,PW,x,y+i*3,1,i==n-1?2:1)}
+function sewerScene(c){
+ rc(c,PG,0,0,W,HY);
+ for(let y=0,r=0;y<HY;y+=6,r++){rc(c,PD,0,y,W,1);for(let x=(r&1)*6-6;x<W;x+=12){rc(c,PD,x,y,1,6);if(((x*7+y*13)>>2)%5==0)dth(c,x+1,y+1,10,4,PL)}}
+ dth(c,0,0,W,10,PD);dth(c,0,10,W,5,PD);dth(c,0,0,24,HY,PD);dth(c,W-24,0,24,HY,PD);
+ // the arched tunnel mouth: receding rings, a far light, and something watching from the dark
+ for(let y=40;y<=94;y++)for(let x=70;x<=170;x++){const d=Math.hypot(x-120,y-94);
+  if(d>46&&d<=49)rc(c,PL,x,y,1,1);else if(d>44&&d<=46)rc(c,PD,x,y,1,1);
+  else if(d<=44){let col=PD;if(d%9<1.4&&((x+y)&1))col=PG;if(d<9)col=((x+y)&1)?PL:PW;if(d<5)col=PW;rc(c,col,x,y,1,1)}}
+ rc(c,PW,110,64,2,2);rc(c,PW,114,64,2,2);rc(c,PW,128,70,2,2);rc(c,PW,132,70,2,2);
+ // pipes
+ hp(c,0,16,W,8);[30,90,150,210].forEach(x=>flange(c,x,16,4,8,0));
+ vp(c,38,24,6,40);flange(c,38,36,6,0,1);valve(c,41,50);
+ vp(c,196,24,6,40);flange(c,196,40,6,0,1);valve(c,199,52);
+ hp(c,44,34,26,5);hp(c,170,34,26,5);flange(c,52,34,4,5,0);flange(c,180,34,4,5,0);
+ hp(c,0,46,16,8);rc(c,PD,16,44,3,12);rc(c,PG,17,45,1,10); // outlet pipe pouring ooze
+ dth(c,15,56,6,12,PW);rc(c,PW,17,56,3,12);rc(c,PW,16,66,5,2);
+ drip(c,62,25,6);drip(c,150,25,4);drip(c,100,25,3);
+ [92,148].forEach(x=>{dth(c,x-6,24,13,13,PW);rc(c,PD,x-3,27,7,7);rc(c,PW,x-2,28,5,5);rc(c,PD,x,28,1,5);rc(c,PD,x-2,30,5,1)}); // caged lamps
+ c.font=FONT;c.textBaseline='top';c.textAlign='center';c.fillStyle=PW;c.fillText('COWABUNGA',120,5);
+ for(let r=0;r<12;r++)rc(c,PL,210,38+r,Math.max(1,13-r),1);rc(c,PW,210,36,14,2);rc(c,PD,213,41,2,2);rc(c,PD,217,42,2,2);rc(c,PD,214,45,2,2); // pizza slice graffiti
+}
+function sewerDeck(c){
+ [12,228].forEach((x,i)=>{vp(c,x-3,DECK-44,6,50);flange(c,x-3,DECK-24,6,0,1);flange(c,x-3,DECK+2,6,0,1);if(i==0)valve(c,x,DECK-34)});
+ const bx=LO-16,by=DECK-6;rc(c,PD,bx,by,10,14);rc(c,PL,bx+1,by+1,8,12);rc(c,PD,bx+1,by+4,8,1);rc(c,PD,bx+1,by+10,8,1);rc(c,PW,bx+4,by+6,2,3);rc(c,PD,bx+4,by+7,2,1);dth(c,bx+8,by+12,6,3,PW); // ooze barrel
+ const px=HI+6,py=DECK+2;rc(c,PD,px,py,13,10);rc(c,PW,px+1,py+1,11,8);rc(c,PL,px+3,py+2,7,6);rc(c,PD,px+4,py+3,1,1);rc(c,PD,px+7,py+4,1,1);rc(c,PD,px+5,py+6,1,1); // pizza box
+}
 function build(){
- const c=bg.getContext('2d');c.imageSmoothingEnabled=false;const D2=DP/2;
+ let c=LB.getContext('2d');c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;const D2=DP/2;
  rc(c,PW,0,0,W,HY);rc(c,PL,0,0,W,26);dth(c,0,26,W,4,PL);dth(c,0,30,W,3,PL);
  cloud(c,16,8);cloud(c,190,5);cloud(c,120,14);cloud(c,226,18);
  for(let x=0,i=0;x<W;i++){const w=6+(i*7)%7,h=5+(i*13)%13;rc(c,PL,x,80-h,w,h);for(let j=2;j<h-1;j+=3)if((i+j)%3)rc(c,PW,x+2,80-h+j,1,1);x+=w}
@@ -254,32 +288,40 @@ function build(){
  [[44,26,'SK8',0],[84,22,'OK',1],[116,26,'RAD',0],[150,22,'AIR',1],[176,26,'CAL',0]].forEach(([x,w,t,d])=>{
   rc(c,PD,x-1,77,w+2,13);rc(c,d?PG:PW,x,78,w,11);c.fillStyle=d?PW:PD;c.fillText(t,x+w/2+1,80)});
  for(let x=46;x<=194;x+=6){const k=(x-46)/6|0,y=62+Math.round(Math.sin((x-46)/148*Math.PI)*5);rc(c,PD,x,y,6,1);rc(c,k%2?PW:PL,x+1,y+1,3,2);rc(c,PD,x+2,y+3,1,1)} // bunting
+ if(lvi==1)sewerScene(c);
+ // ---- from here on: the ramp layer (transparent where there is no ramp) ----
+ c=RL.getContext('2d');c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
  // front face of the ramp: crate lattice
  c.save();c.beginPath();c.moveTo(0,DECK+D2);c.lineTo(LO,DECK+D2);c.lineTo(LO,YC+D2);
  for(let x=LO+1;x<=HI-1;x+=2)c.lineTo(x,surf(x)+D2);
  c.lineTo(HI,YC+D2);c.lineTo(HI,DECK+D2);c.lineTo(W,DECK+D2);c.lineTo(W,HY);c.lineTo(0,HY);c.closePath();
  c.fillStyle=PG;c.fill();c.clip();
- for(let cx=0;cx<W;cx+=8)for(let cy=48;cy<HY;cy+=8){rc(c,PD,cx,cy,8,1);rc(c,PD,cx,cy,1,8);for(let k=1;k<7;k++){rc(c,PD,cx+k,cy+k,1,1);rc(c,PD,cx+7-k,cy+k,1,1)}}
+ if(lvi==0)for(let cx=0;cx<W;cx+=8)for(let cy=48;cy<HY;cy+=8){rc(c,PD,cx,cy,8,1);rc(c,PD,cx,cy,1,8);for(let k=1;k<7;k++){rc(c,PD,cx+k,cy+k,1,1);rc(c,PD,cx+7-k,cy+k,1,1)}}
+ else for(let cy=48,r=0;cy<HY;cy+=6,r++){rc(c,PD,0,cy,W,1);for(let cx=(r&1)*6-6;cx<W;cx+=12){rc(c,PD,cx,cy,1,6);if(((cx*5+cy*11)>>2)%4==0)dth(c,cx+1,cy+1,10,4,PL)}}
  rc(c,PD,0,HY-4,W,4);c.restore();
  // riding surface, extruded in depth
  for(let x=LO+1;x<=HI-1;x++){const y=surf(x),h=Math.round(DP+Math.min(Math.abs(slope(x)),8)),t=Math.round(y-D2);
   rc(c,PL,x,t,1,h);
   for(let j=0;j<h;j++){if(j<5&&(x+j)&1)rc(c,PG,x,t+j,1,1);if(j>h*.55&&(x+j)&1)rc(c,PW,x,t+j,1,1)}
   rc(c,PG,x,t,1,1);rc(c,PW,x,t+h-1,1,1);rc(c,PD,x,t+h,1,2)}
- for(let x=CX1+4;x<CX2-4;x+=10){rc(c,PG,x,FL-D2+8,5,1);rc(c,PG,x+5,FL+D2-9,5,1)} // skid marks on the floor
- c.font=FONT;c.textBaseline='top';c.textAlign='center';rc(c,PD,98,126,44,10);rc(c,PL,99,127,42,8);c.fillStyle=PD;c.fillText(['BIG','HALF'][lvi],120,128); // name plate on the ramp face
+ if(lvi==0)for(let x=CX1+4;x<CX2-4;x+=10){rc(c,PG,x,FL-D2+8,5,1);rc(c,PG,x+5,FL+D2-9,5,1)} // skid marks on the floor
+ else{for(let x=CX1+2;x<CX2-2;x++){const y=FL+Math.round(Math.sin(x/5)*1.5);rc(c,PW,x,y,1,2);rc(c,PG,x,y+2,1,1)}[[CX1+10,FL-6],[CX2-14,FL+7],[120,FL-9]].forEach(([bx2,by2])=>{rc(c,PW,bx2,by2,2,2);rc(c,PD,bx2+1,by2+1,1,1)})} // ooze stream with bubbles
+ c.font=FONT;c.textBaseline='top';c.textAlign='center';rc(c,PD,98,126,44,10);rc(c,PL,99,127,42,8);c.fillStyle=PD;c.fillText(['BIG','SEWER'][lvi],120,128); // name plate on the ramp face
  // side decks
  [[0,LO],[HI,W-HI]].forEach(([x,w])=>{rc(c,PL,x,DECK-D2,w,DP);dth(c,x,DECK-D2,w,5,PG);dth(c,x,DECK+4,w,D2-4,PW);
   rc(c,PG,x,DECK-D2,w,1);rc(c,PW,x,DECK+D2-1,w,1);rc(c,PD,x,DECK+D2,w,2)});
- rc(c,PD,LO-14,DECK-1,7,9);rc(c,PG,LO-13,DECK,5,7);rc(c,PL,LO-14,DECK-2,7,1);rc(c,PW,LO-12,DECK+1,1,5); // trash bin
- [[2,2],[1,4],[0,6]].forEach(([dx,w],r)=>rc(c,r==1?PW:PL,HI+8+dx,DECK+2+r,w,1));rc(c,PD,HI+7,DECK+5,8,2); // traffic cone
+ if(lvi==0)rc(c,PD,LO-14,DECK-1,7,9),rc(c,PG,LO-13,DECK,5,7),rc(c,PL,LO-14,DECK-2,7,1),rc(c,PW,LO-12,DECK+1,1,5); // trash bin
+ if(lvi==0){[[2,2],[1,4],[0,6]].forEach(([dx,w],r)=>rc(c,r==1?PW:PL,HI+8+dx,DECK+2+r,w,1));rc(c,PD,HI+7,DECK+5,8,2)} // traffic cone
  [LO-2,HI-1].forEach(x=>{const y0=DECK-D2,y1=DECK+D2;
   rc(c,PD,x,y0,4,y1-y0);rc(c,PW,x+1,y0,1,y1-y0);rc(c,PL,x+2,y0,1,y1-y0);
   for(let y=y0+4;y<y1;y+=8)rc(c,PD,x,y,4,1);
   rc(c,PD,x,y1,4,3);rc(c,PG,x+1,y1+1,2,1)});
- palm(c,12,DECK+8,34);palm(c,228,DECK+8,30)
+if(lvi==0){palm(c,12,DECK+8,34);palm(c,228,DECK+8,30)}else sewerDeck(c)
+ const o=bg.getContext('2d');o.clearRect(0,0,W,H);o.drawImage(EXT[lvi].background||LB,0,0);o.drawImage(EXT[lvi].ramp||RL,0,0)
 }
 build();if(document.fonts)document.fonts.load(FONT).then(build);
+// hand-made art: PNG files in assets/levels/ (big_background.png, big_ramp.png, sewer_background.png, sewer_ramp.png) replace the built-in drawing
+['big','sewer'].forEach((nm,i)=>['background','ramp'].forEach(kind=>{const im=new Image();im.onload=()=>{EXT[i][kind]=im;if(lvi==i)build()};im.src='assets/levels/'+nm+'_'+kind+'.png'}));
 
 /* ---------- drawing ---------- */
 // balance meter over the skater during a rock stall: marker to the ramp end = ride in, to the other end = fall
@@ -293,6 +335,10 @@ function shadow(){const p=P;
   const fall=p.stall&&p.hi&&!p.drop&&p.out<=0&&p.stT<p.fT,h=fall?Math.max(0,p.h0-p.fv*p.stT-247.5*p.stT*p.stT):0,w=Math.max(4,10-((h/5)|0)),
    gy=Math.round(DECK+(p.z-.5)*DP)+2,gx=Math.round(p.sx<120?p.sx-4:p.sx+4);
   if(h>16)dth(g,gx-(w>>1),gy,w,2,PD);else rc(g,PD,gx-(w>>1),gy,w,2);return}
+ if(p.bail){ // he is lying along the surface: the shadow runs under his whole body, following the curve of the ramp
+  let x=p.x;for(let t=0;t<=25;t++){const y=surf(x)+(p.z-.5)*DP+1,xi=Math.round(x),yi=Math.round(y);
+   if(!(t>21&&((xi+yi)&1))){rc(g,PD,xi,yi,1,1);rc(g,PD,xi,yi+1,1,1)}x+=p.dir*Math.cos(Math.atan(slope(x)))}
+  return}
  const h=p.air?Math.max(0,surf(p.x)-p.y):0,a=Math.atan(slope(p.x)),cs=Math.cos(a),sn=Math.sin(a),steep=Math.abs(sn)>.7,
   L=Math.max(5,(steep?10:16)-((h/6)|0)),gy=surf(p.x)+(p.z-.5)*DP+1,faint=h>18;
  for(let t=-L/2;t<=L/2;t++){const x=Math.round(p.x+t*cs),y=Math.round(gy+t*sn);
@@ -409,7 +455,7 @@ function menu(){
  if((tt*2|0)%2==0)T('SPACE / ESC: BACK',120,112,PW,'center');
 }
 /* ---------- level select ---------- */
-const LEVELS=[['BIG RAMP',44,80,160,232],['HALF RAMP',22,79,161,175]]; // name, radius, flat start, flat end, top speed
+const LEVELS=[['BIG RAMP',44,80,160,232],['SEWER',22,79,161,175]]; // name, radius, flat start, flat end, top speed
 let lv=0;
 function setLevel(i){lv=lvi=i;const L=LEVELS[i];R=L[1];CX1=L[2];CX2=L[3];VMAX=L[4];YC=FL-R;DECK=YC-6;LO=CX1-R;HI=CX2+R;build();reset()}
 try{const sv=+localStorage.getItem('rampLevel');if(sv>0&&sv<LEVELS.length)setLevel(sv)}catch(e){}
